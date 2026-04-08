@@ -1,0 +1,211 @@
+use std::time::Duration;
+
+use futures_util::StreamExt;
+use reqwest::Client;
+
+use crate::types::{
+    ChatMessage, ChatOptions, ChatRequest, ChatResponse, Model, ModelsResponse, OllamaStatus,
+};
+
+const OLLAMA_BASE_URL: &str = "http://localhost:11434";
+
+pub struct OllamaService {
+    client: Client,
+    base_url: String,
+}
+
+impl OllamaService {
+    pub fn new() -> Self {
+        let client = Client::builder()
+            .timeout(Duration::from_secs(300))
+            .build()
+            .expect("failed to create Ollama HTTP client");
+
+        Self {
+            client,
+            base_url: OLLAMA_BASE_URL.to_string(),
+        }
+    }
+
+    pub async fn check_status(&self) -> OllamaStatus {
+        match self
+            .client
+            .get(format!("{}/api/tags", self.base_url))
+            .timeout(Duration::from_secs(5))
+            .send()
+            .await
+        {
+            Ok(resp) if resp.status().is_success() => OllamaStatus {
+                running: true,
+                version: None,
+                error: None,
+            },
+            Ok(resp) => OllamaStatus {
+                running: false,
+                version: None,
+                error: Some(format!("Unexpected status: {}", resp.status())),
+            },
+            Err(error) => OllamaStatus {
+                running: false,
+                version: None,
+                error: Some(error.to_string()),
+            },
+        }
+    }
+
+    pub async fn list_models(&self) -> Result<Vec<Model>, String> {
+        let response = self
+            .client
+            .get(format!("{}/api/tags", self.base_url))
+            .send()
+            .await
+            .map_err(|error| format!("Request failed: {}", error))?;
+
+        if !response.status().is_success() {
+            return Err(format!("Failed to list models: {}", response.status()));
+        }
+
+        let models: ModelsResponse = response
+            .json()
+            .await
+            .map_err(|error| format!("Parse error: {}", error))?;
+
+        Ok(models.models)
+    }
+
+    #[allow(dead_code)]
+    pub async fn chat(
+        &self,
+        model: &str,
+        messages: Vec<ChatMessage>,
+    ) -> Result<ChatResponse, String> {
+        let request = ChatRequest {
+            model: model.to_string(),
+            messages,
+            stream: Some(false),
+            options: None,
+        };
+
+        let response = self
+            .client
+            .post(format!("{}/api/chat", self.base_url))
+            .json(&request)
+            .send()
+            .await
+            .map_err(|error| format!("Request failed: {}", error))?;
+
+        if !response.status().is_success() {
+            return Err(format!("Chat failed: {}", response.status()));
+        }
+
+        response
+            .json()
+            .await
+            .map_err(|error| format!("Parse error: {}", error))
+    }
+
+    pub async fn chat_stream<F>(
+        &self,
+        model: &str,
+        messages: Vec<ChatMessage>,
+        options: Option<ChatOptions>,
+        mut on_chunk: F,
+    ) -> Result<(), String>
+    where
+        F: FnMut(ChatResponse) + Send,
+    {
+        let request = ChatRequest {
+            model: model.to_string(),
+            messages,
+            stream: Some(true),
+            options,
+        };
+
+        let response = self
+            .client
+            .post(format!("{}/api/chat", self.base_url))
+            .json(&request)
+            .send()
+            .await
+            .map_err(|error| format!("Request failed: {}", error))?;
+
+        if !response.status().is_success() {
+            return Err(format!("Chat failed: {}", response.status()));
+        }
+
+        let mut stream = response.bytes_stream();
+        let mut buffer = String::new();
+
+        while let Some(chunk) = stream.next().await {
+            let chunk = chunk.map_err(|error| format!("Stream error: {}", error))?;
+            buffer.push_str(&String::from_utf8_lossy(&chunk));
+
+            while let Some(newline_pos) = buffer.find('\n') {
+                let line = buffer[..newline_pos].to_string();
+                buffer = buffer[newline_pos + 1..].to_string();
+
+                if line.trim().is_empty() {
+                    continue;
+                }
+
+                match serde_json::from_str::<ChatResponse>(&line) {
+                    Ok(response) => {
+                        let is_done = response.done;
+                        on_chunk(response);
+                        if is_done {
+                            return Ok(());
+                        }
+                    }
+                    Err(error) => {
+                        eprintln!("Failed to parse chunk: {} - {}", line, error);
+                    }
+                }
+            }
+        }
+
+        if !buffer.trim().is_empty() {
+            match serde_json::from_str::<ChatResponse>(buffer.trim()) {
+                Ok(response) => {
+                    on_chunk(response);
+                }
+                Err(error) => {
+                    eprintln!("Failed to parse trailing chunk: {} - {}", buffer, error);
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    pub async fn pull_model(&self, name: &str) -> Result<(), String> {
+        let response = self
+            .client
+            .post(format!("{}/api/pull", self.base_url))
+            .json(&serde_json::json!({ "name": name }))
+            .send()
+            .await
+            .map_err(|error| format!("Request failed: {}", error))?;
+
+        if !response.status().is_success() {
+            return Err(format!("Pull failed: {}", response.status()));
+        }
+
+        Ok(())
+    }
+
+    pub async fn delete_model(&self, name: &str) -> Result<(), String> {
+        let response = self
+            .client
+            .delete(format!("{}/api/delete", self.base_url))
+            .json(&serde_json::json!({ "name": name }))
+            .send()
+            .await
+            .map_err(|error| format!("Request failed: {}", error))?;
+
+        if !response.status().is_success() {
+            return Err(format!("Delete failed: {}", response.status()));
+        }
+
+        Ok(())
+    }
+}

@@ -1,0 +1,58 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Frontend build artifacts
+local-ai/node_modules/
+local-ai/dist/
+local-ai/.vite/
+
+# Rust / Tauri build artifacts
+local-ai/src-tauri/target/
+local-ai/src-tauri/gen/
+*.pdb
+
+# Local installer / archive downloads
+rustup-init.exe
+vs_BuildTools.exe
+*.zip
+*.7z
+*.tar
+*.gz
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Temporary scratch files
+*.tmp
+*.temp
+*.bak
+
+# Private planning docs
+ROADMAP.md
+VOICE_CAPABILITY_PLAN.md
+ENTERPRISE_PRODUCT_PLAN.md
+COWORK_CURATOR_PLAN.md
+MODERNCLAW_FOUNDATION_PLAN.md
+MODEL_SELECTION_PLAN.md
+AGENT_VARIANTS_PLAN.md
+APP_MARKETING_PLAN.md
+JANET_BRAIN_PLAN.md
+
+MODERNCLAW_KNOWLEDGE_INGESTION_INSTRUCTIONS.md
+
+MODERNCLAW_MASTER_PLAN.md
