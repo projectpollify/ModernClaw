@@ -14,6 +14,10 @@ The repo already presents as a focused single-workspace product, but the finishe
 - completed the latest manual `tauri:dev` QA phase across the current product surface
 - validated the Curator request-to-stage-to-import loop end to end
 - documented the external Cowork Curator automation setup so the scheduled task can be rebuilt from the repo
+- added a visible chat character budget
+- added thumbs up / thumbs down reply feedback with persistence
+- added a small feedback summary view in Settings
+- added `gemma4:e2b` as a lighter supported Gemma 4 option alongside the main lane
 - rewrote visible product copy around `workspace` instead of role-management language
 - updated root docs to the ModernClawBase identity
 - removed stale planning and summary docs that no longer matched the product
@@ -62,20 +66,41 @@ Current build notes:
 - Rust still has a few existing dead-code warnings
 - the current Curator integration still depends on active-workspace path alignment between automation and app runtime
 
+## Curator / Knowledge Status
+
+Built now:
+- Curator automation can process Markdown request files and stage importable packages
+- active-workspace resolution is documented and validated
+- Curator packages can be reviewed and imported through the app
+- reply feedback can be captured and summarized locally
+
+Partially built:
+- Curator intake-as-interpreter is specified, but the primary one-box user flow is not yet a first-class app feature
+- feedback analytics exist, but only as a lightweight summary card rather than deeper reporting
+- NotebookLM workflow is documented, but only parts of the surrounding pipeline are live
+
+Not built yet:
+- true NotebookLM extraction through the live Curator pipeline
+- first-class Rosie verification in the app or package-review flow
+- built-in knowledge rollback, edit, provenance, and removal tooling strong enough to replace review-first safety
+
 ## Remaining To Reach Base Ready
 
 1. Audit the app for remaining compatibility-only UI, state, and terminology after the completed QA pass.
 2. Collapse or hide the internal compatibility-friendly agent layer where it still controls single-workspace model and voice behavior.
 3. Decide what minimum compatibility scaffolding must remain in the base repo for migration safety.
 4. Decide whether Curator automation should keep following active agent workspaces or be simplified into one clearer base-workspace path.
-5. Define the base-ready milestone that separates transitional shipped scope from finished base scope.
-6. Move curator out of the base definition once the base-ready milestone is reached.
-7. Tidy remaining docs so they match the in-progress split state and then the final base state.
+5. Decide whether the one-box Curator intake flow belongs in base at all or remains part of the fuller multi lane.
+6. Define the base-ready milestone that separates transitional shipped scope from finished base scope.
+7. Move curator out of the base definition once the base-ready milestone is reached.
+8. Tidy remaining docs so they match the in-progress split state and then the final base state.
 
 ## Open Questions
 
 - whether the internal compatibility-friendly agent layer should stay hidden, be simplified into workspace settings, or be removed from base entirely
 - whether the current Brain naming and positioning is final for the base edition
+- whether NotebookLM-powered curation belongs in base, multi, or only external automation
+- whether Rosie verification should stay external first or become a surfaced in-app review layer
 - what exact milestone marks base-ready and triggers the curator handoff to the fuller multi product
 
 ## Working Rule
