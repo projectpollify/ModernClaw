@@ -45,19 +45,21 @@ That makes it different from:
 The current base product is focused around one visible local workspace with:
 
 - chat with conversation history
+- built-in Joe Support for setup and troubleshooting
 - onboarding and settings
 - setup-readiness checks with required and optional items
 - editable memory files
 - local Ollama model management
 - local voice output and input
 - image attachments for multimodal prompts
+- audio-note attachments with Whisper transcription
 - Brain-guided refinement flows
 - knowledge-file loading
 - Curator staging and import support
 
 The product is still in an active MVP phase.
 
-Some internal architecture is shared with a fuller multi-brain version, but the base experience is intended to feel simple and single-workspace.
+Some internal architecture is still shared with a fuller multi-brain version, but the base experience is now being tightened around one user workspace plus built-in Joe Support instead of a generic hidden agent layer.
 
 ## Why It Matters
 
@@ -88,8 +90,8 @@ The near-term direction is:
 - make setup easier
 - make readiness clearer
 - strengthen the single-workspace experience
-- improve multimodal support like image understanding
-- add audio-note understanding on top of the new attachment pipeline
+- improve multimodal support like image understanding and audio-note workflows
+- keep Joe Support useful without exposing full multi-brain management
 - keep the product local, legible, and trustworthy
 
 ## Short Version

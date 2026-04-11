@@ -3,7 +3,7 @@
 ## Repo Role
 This workspace is for `ModernClawBase`, the free and open-source base edition of ModernClaw.
 
-The product here is a focused single-workspace desktop app.
+The product here is a focused single-workspace desktop app with built-in Joe Support.
 
 ## Product Goal
 ModernClawBase should be:
@@ -19,6 +19,7 @@ It should not feel like a teaser shell, a crippled demo, or a premium upsell fun
 ## Product Scope
 Keep the base app centered on:
 - one local workspace
+- one built-in Joe Support lane for setup and troubleshooting
 - conversation history
 - `SOUL.md`, `USER.md`, `MEMORY.md`
 - daily logs
@@ -32,6 +33,7 @@ Keep the base app centered on:
 
 Keep out of scope for now:
 - role-management surfaces
+- generic multi-brain creation and lifecycle tooling
 - workspace duplication and lifecycle tooling
 - advanced automation
 - premium expert packs

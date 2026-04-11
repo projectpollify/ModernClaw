@@ -24,6 +24,8 @@ The product is intentionally focused:
 - curator review for staged knowledge packages
 - local voice output through Piper
 - local voice input through Whisper
+- audio-note attachments with Whisper transcription
+- built-in Joe Support for setup, troubleshooting, and product guidance
 - onboarding, settings, and storage visibility
 
 ## Product Shape
@@ -78,11 +80,11 @@ Runtime workspace files live under the LocalAI app-data root and include:
 
 Important current detail:
 
-- the app resolves memory, knowledge, and curator folders from the active workspace path
-- when agent workspaces are present, the live Curator inbox and knowledge import flow may resolve under `LocalAI/agents/<active-agent>/` rather than the top-level `LocalAI/` root
-- external automation that prepares curator packages must target the active workspace, not assume `LocalAI/curator/` is always the live inbox
+- the base app now treats `Main Workspace` and built-in `Joe Support` as shared-workspace profiles rather than separate user-managed brains
+- memory, knowledge, curator, attachments, and tools all stay rooted in the same local workspace path
+- external automation that prepares curator packages should target the main LocalAI workspace root
 
-The backend still keeps a compatibility-friendly internal structure, but the live product presents a single local workspace.
+The backend still carries profile-aware compatibility structure, but the base runtime now treats it as one user workspace plus built-in Joe Support rather than generic hidden multi-brain behavior.
 
 ## Requirements
 
@@ -112,9 +114,11 @@ Current setup behavior:
 
 Current multimodal behavior:
 
-- chat accepts image attachments through drag-drop or the file picker
-- images are copied into the active workspace under `attachments/`
-- conversation history stores attachment metadata and file paths rather than image blobs
+- chat accepts image and audio attachments through drag-drop or the file picker
+- chat can record microphone audio notes, transcribe them with Whisper, and attach the saved `.wav` file to the message
+- image and audio attachments are copied into the active workspace under `attachments/`
+- audio-note transcripts are added to the user message content before the model request is built
+- conversation history stores attachment metadata and file paths rather than binary blobs
 - the Ollama request only base64-encodes images at send time
 
 ## Development
@@ -140,7 +144,7 @@ npm run tauri:build
 - Piper and Whisper dependency delivery is still manual on a clean machine
 - knowledge files are loaded directly rather than selectively retrieved
 - daily logs are user-written notes, not automatic summaries
-- audio-note attachments are not yet wired through the new multimodal pipeline
+- audio-note prompts currently reach the model through transcript text rather than direct audio understanding
 
 ## Direction
 
@@ -149,6 +153,7 @@ The current priority is to keep ModernClaw simple, stable, and trustworthy.
 That means:
 
 - polishing the single-workspace experience
+- keeping Joe Support built in without turning base back into generic multi-brain management
 - making setup easier to understand on a clean machine
-- improving multimodal support in small, legible slices
+- improving multimodal support in small, legible slices, including the new audio-note path
 - keeping documentation disciplined before adding more surface area

@@ -21,6 +21,7 @@ ModernClawBase is:
 - free and open-source
 - local-first
 - single-workspace
+- one user workspace plus built-in Joe Support
 - grounded in editable Markdown memory files
 - useful on its own
 
@@ -45,6 +46,7 @@ The base app should preserve the core ModernClaw identity:
 
 ### Workspace
 - one chat workspace
+- one built-in Joe Support lane for setup and troubleshooting
 - conversation history
 - Memory view
 - Brain view
@@ -85,6 +87,7 @@ If curator is moved out of base, it should be completed as part of the fuller mu
 
 These should stay out of the base product unless they become essential:
 - role-management surfaces
+- generic multi-brain creation and lifecycle tooling
 - workspace cloning, archiving, snapshots, or templates
 - advanced automation and recurring workflows
 - premium expert packs
@@ -109,6 +112,10 @@ It should be easy to explain:
 
 ### Workspace Model
 The app should present one durable local workspace.
+
+If the base product keeps a second assistant lane, it should be a built-in Joe Support profile rather than a generic user-managed brain system.
+
+Joe Support should share the same workspace root unless a separate support workspace becomes truly necessary.
 
 Internal compatibility layers are acceptable if they help future migration, but the user-facing product should stay simple.
 

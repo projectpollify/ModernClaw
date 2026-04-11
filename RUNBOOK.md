@@ -76,8 +76,17 @@ Working now:
 
 - local voice output through Piper
 - local voice input through Whisper
+- microphone-recorded audio notes with Whisper transcription
+- dropped or picker-selected audio files can be attached, transcribed, and rendered back in chat history
 - pause, resume, and stop playback controls
 - shared machine-level tool paths with workspace-level voice preferences
+
+### Current Audio-Note Behavior
+
+- audio notes are normalized to `.wav` before Whisper transcription
+- saved audio files are copied into `attachments/` under the active workspace
+- the transcript text is appended to the user message content that is sent to the model
+- the original audio attachment remains available in conversation history for playback
 
 ### Current Default Voice Tool Layout
 
@@ -114,21 +123,19 @@ Important current limitation:
 - Packages added outside the app appear in the Curator Inbox after refresh.
 - The external Cowork automation setup is documented in [COWORK_CURATOR_AUTOMATION_SPEC.md](C:/Users/pento/Desktop/ModernClawBase/COWORK_CURATOR_AUTOMATION_SPEC.md) so it can be rebuilt if the scheduled task is lost.
 
-### Active Workspace Path Matters
+### Shared Workspace Path
 
 Important current behavior:
 
-- the Tauri backend resolves memory services from the active workspace path stored in the app database
-- that means the live Curator inbox may read from `%APPDATA%\LocalAI\agents\<active-agent>\curator\staged\` instead of `%APPDATA%\LocalAI\curator\staged\`
-- the same applies to imports into `knowledge/`
+- the base runtime keeps `Main Workspace` and built-in `Joe Support` on the same LocalAI workspace root
+- Curator staged packages are read from `curator/staged/` under that shared root
+- imports into `knowledge/` use the same shared root
 
 Practical rule for automation:
 
-- Curator automation must resolve the active workspace dynamically
-- do not assume the top-level `LocalAI\curator\` folders are the live app inbox
-- if the active brain is `joe`, the live Curator folders are under `%APPDATA%\LocalAI\agents\joe\curator\`
-- if the active brain changes, the automation should follow that workspace automatically
-- the automation also needs access to `%APPDATA%\com.localai.app\data.db` so it can resolve the active workspace from the live database
+- Curator automation should target the top-level LocalAI workspace root used by the base app
+- do not build new base-only tooling around per-brain workspace folders
+- if fuller multi-product work returns later, revisit workspace-path assumptions there instead of reintroducing them into base
 
 ## Local Data Location
 
@@ -144,7 +151,7 @@ The app uses the `LocalAI` app-data root for runtime files, including:
 
 When managed agent workspaces are in use, active runtime files may instead live under:
 
-- `%APPDATA%\LocalAI\agents\<active-agent>\`
+- fuller multi-product compatibility paths outside the intended base runtime
 
 ## Current Model Stack
 
