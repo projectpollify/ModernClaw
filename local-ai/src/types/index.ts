@@ -1,4 +1,4 @@
-export type ViewType = 'chat' | 'memory' | 'brain' | 'settings';
+export type ViewType = 'chat' | 'memory' | 'brain' | 'setup' | 'settings';
 export type Theme = 'light' | 'dark' | 'system';
 
 export interface Agent {
@@ -33,8 +33,18 @@ export interface Message {
   content: string;
   createdAt: Date;
   conversationId: string;
+  attachments?: MessageAttachment[];
   tokensUsed?: number;
   feedback?: 'up' | 'down';
+}
+
+export interface MessageAttachment {
+  id: string;
+  kind: 'image' | 'audio';
+  name: string;
+  path: string;
+  mimeType?: string;
+  sizeBytes?: number;
 }
 
 export interface MessageFeedbackSummary {

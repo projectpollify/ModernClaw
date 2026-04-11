@@ -22,7 +22,7 @@ use commands::memory::{
     memory_append_log, memory_get_base_path, memory_get_today_log, memory_import_curator_package,
     memory_initialize, memory_list_curator_staged, memory_list_daily_logs, memory_list_knowledge,
     memory_load_context, memory_open_folder, memory_read_file, memory_reject_curator_package,
-    memory_write_file, MemoryState,
+    memory_store_chat_attachment, memory_write_file, MemoryState,
 };
 use commands::settings::{setting_get, setting_set, settings_get_all, settings_reset};
 use commands::voice::{voice_check_input_status, voice_check_status, voice_speak, voice_transcribe};
@@ -139,6 +139,7 @@ pub fn run() {
             memory_load_context,
             memory_get_base_path,
             memory_open_folder,
+            memory_store_chat_attachment,
             settings_get_all,
             setting_set,
             setting_get,

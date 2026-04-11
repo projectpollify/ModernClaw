@@ -4,7 +4,7 @@ use tauri::State;
 
 use crate::services::agent_repo::AgentRepository;
 use crate::services::{conversation_repo::ConversationRepository, message_repo::MessageRepository};
-use crate::types::{Conversation, Message, MessageFeedbackSummary};
+use crate::types::{Conversation, Message, MessageAttachment, MessageFeedbackSummary};
 use crate::DatabaseState;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -14,6 +14,8 @@ pub struct MessageDto {
     pub conversation_id: String,
     pub role: String,
     pub content: String,
+    #[serde(default)]
+    pub attachments: Vec<MessageAttachment>,
     pub tokens_used: Option<i32>,
     pub feedback: Option<String>,
     pub created_at: DateTime<Utc>,
@@ -26,6 +28,7 @@ impl From<MessageDto> for Message {
             conversation_id: value.conversation_id,
             role: value.role,
             content: value.content,
+            attachments: value.attachments,
             tokens_used: value.tokens_used,
             feedback: value.feedback,
             created_at: value.created_at,
@@ -40,6 +43,7 @@ impl From<Message> for MessageDto {
             conversation_id: value.conversation_id,
             role: value.role,
             content: value.content,
+            attachments: value.attachments,
             tokens_used: value.tokens_used,
             feedback: value.feedback,
             created_at: value.created_at,

@@ -4,7 +4,7 @@ import type { ChatMessage } from '@/services/ollama';
 export function useContextBuilder() {
   const buildContext = async (
     conversationHistory: ChatMessage[],
-    userMessage: string,
+    userMessage: ChatMessage,
     maxTokens?: number
   ) => contextApi.buildContext(conversationHistory, userMessage, maxTokens);
 

@@ -28,6 +28,8 @@ pub struct ModelsResponse {
 pub struct ChatMessage {
     pub role: String,
     pub content: String,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub images: Vec<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -103,9 +105,22 @@ pub struct Message {
     pub conversation_id: String,
     pub role: String,
     pub content: String,
+    #[serde(default)]
+    pub attachments: Vec<MessageAttachment>,
     pub tokens_used: Option<i32>,
     pub feedback: Option<String>,
     pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct MessageAttachment {
+    pub id: String,
+    pub kind: String,
+    pub name: String,
+    pub path: String,
+    pub mime_type: Option<String>,
+    pub size_bytes: Option<u64>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

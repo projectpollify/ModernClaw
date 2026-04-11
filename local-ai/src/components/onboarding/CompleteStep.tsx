@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/Button';
+import { SetupStatusPanel } from '@/components/setup/SetupStatusPanel';
 import { useViewStore } from '@/stores/uiStore';
 
 export function CompleteStep({ onFinish }: { onFinish: () => void }) {
@@ -20,6 +21,13 @@ export function CompleteStep({ onFinish }: { onFinish: () => void }) {
         ModernClaw is set up and ready to chat. You can refine personality in Memory, switch models in Settings, and
         keep everything local.
       </p>
+
+      <div className="mx-auto mt-8 max-w-4xl text-left">
+        <SetupStatusPanel
+          compact
+          description="This is your single setup checklist. Required items should be ready before normal use, while voice features can stay optional."
+        />
+      </div>
 
       <div className="mx-auto mt-8 max-w-xl rounded-[28px] border border-border bg-secondary/35 p-6 text-left">
         <p className="text-sm font-medium">Good next steps</p>

@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hermes Agent vs ModernClaw</title>
+  <style>
+    :root {
+      --ink: #1f2937;
+      --muted: #5b6472;
+      --border: #d6dde6;
+      --bg: #f5f7fa;
+      --card: #ffffff;
+      --accent: #0f766e;
+      --accent-soft: #e6f5f3;
+      --warm: #8b5e34;
+      --warm-soft: #faf1e6;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--ink);
+      background: linear-gradient(180deg, #eef4f7 0%, #f8fafc 100%);
+      line-height: 1.55;
+    }
+
+    main {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 36px 32px 48px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #fefcf7 0%, #eef7f6 100%);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 28px 30px;
+      box-shadow: 0 16px 48px rgba(31, 41, 55, 0.08);
+    }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      font-size: 12px;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 34px;
+      line-height: 1.15;
+    }
+
+    .subtitle {
+      margin: 14px 0 0;
+      font-size: 16px;
+      color: var(--muted);
+      max-width: 760px;
+    }
+
+    section {
+      margin-top: 26px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 22px 24px;
+      box-shadow: 0 10px 30px rgba(31, 41, 55, 0.05);
+    }
+
+    h2 {
+      margin: 0 0 14px;
+      font-size: 22px;
+    }
+
+    h3 {
+      margin: 0 0 10px;
+      font-size: 17px;
+    }
+
+    p {
+      margin: 0 0 12px;
+    }
+
+    ul {
+      margin: 8px 0 0 20px;
+      padding: 0;
+    }
+
+    li { margin: 0 0 8px; }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .pill-accent {
+      color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .pill-warm {
+      color: var(--warm);
+      background: var(--warm-soft);
+    }
+
+    .compare-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      font-size: 14px;
+    }
+
+    .compare-table th,
+    .compare-table td {
+      border: 1px solid var(--border);
+      padding: 12px 10px;
+      vertical-align: top;
+      text-align: left;
+    }
+
+    .compare-table th {
+      background: #f6f8fb;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .summary-box {
+      border-left: 4px solid var(--accent);
+      background: #f8fffe;
+      padding: 14px 16px;
+      border-radius: 12px;
+    }
+
+    .sources li {
+      word-break: break-word;
+    }
+
+    .footnote {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    code {
+      font-family: Consolas, "SFMono-Regular", monospace;
+      font-size: 0.95em;
+      background: #f4f6f8;
+      padding: 1px 5px;
+      border-radius: 6px;
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      main {
+        max-width: none;
+        padding: 0;
+      }
+
+      section, .hero {
+        box-shadow: none;
+        break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="hero">
+      <p class="eyebrow">Detailed Product Comparison</p>
+      <h1>Hermes Agent vs ModernClaw</h1>
+      <p class="subtitle">
+        A practical comparison of what Hermes Agent is publicly positioned to do as of April 10, 2026,
+        and what ModernClaw currently does in this repository today. This summary is written to clarify
+        product shape, technical direction, and where the two projects overlap or diverge.
+      </p>
+    </div>
+
+    <section>
+      <h2>Executive Summary</h2>
+      <div class="summary-box">
+        <p>
+          Hermes Agent is best understood as an autonomous, persistent agent platform. It is designed to
+          live on a machine or server, operate across messaging channels and tools, build reusable skills,
+          schedule automations, and keep getting more capable over time.
+        </p>
+        <p>
+          ModernClaw is best understood as a local-first assistant application. It is centered on a desktop
+          product with visible onboarding, editable memory files, local model management, and direct user
+          control over storage and behavior.
+        </p>
+        <p>
+          In short: Hermes is closer to “run an agent system,” while ModernClaw is closer to “install a
+          private personal AI app.”
+        </p>
+      </div>
+    </section>
+
+    <section>
+      <h2>What Hermes Agent Appears To Be</h2>
+      <p>
+        Based on official Hermes pages, Hermes is positioned as an open-source autonomous AI agent with
+        persistent memory, automated skill creation, multi-platform reach, scheduled automations, sub-agents,
+        web and browser control, and flexible model backends. Its public messaging emphasizes long-running
+        autonomy and infrastructure flexibility more than a traditional desktop app experience.
+      </p>
+      <ul>
+        <li>It can live on a server or machine and continue operating over time.</li>
+        <li>It can connect to Telegram, Discord, Slack, WhatsApp, CLI, and related workflows.</li>
+        <li>It can create and reuse skills automatically as it solves repeated problems.</li>
+        <li>It supports more agent-runtime concepts such as sub-agents, scheduling, and browser control.</li>
+        <li>It is presented as something that can start hosted and later move to self-hosting if desired.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>What ModernClaw Appears To Be</h2>
+      <p>
+        Based on the current repository, ModernClawBase is a Tauri desktop app built around local-first chat,
+        visible onboarding, local model management through Ollama, editable memory files, settings, and a
+        single visible workspace/brain experience. The emphasis is on direct control, inspectable files,
+        and making setup more understandable for a normal user.
+      </p>
+      <ul>
+        <li>It has a desktop shell and app navigation rather than a server-first or messaging-first shape.</li>
+        <li>It uses onboarding to guide setup.</li>
+        <li>It exposes <code>SOUL.md</code>, <code>USER.md</code>, and <code>MEMORY.md</code> as user-editable files.</li>
+        <li>It manages local models through Ollama and local voice tools through Settings.</li>
+        <li>It is trying to feel easier to install and understand than a heavier agent stack.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Main Differences</h2>
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Area</th>
+            <th>Hermes Agent</th>
+            <th>ModernClaw</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Primary shape</td>
+            <td>Autonomous agent runtime and agent platform.</td>
+            <td>Local desktop assistant application.</td>
+          </tr>
+          <tr>
+            <td>Main interaction style</td>
+            <td>Messaging channels, CLI, automations, and ongoing background behavior.</td>
+            <td>Visible desktop UI with chat, settings, memory views, and onboarding.</td>
+          </tr>
+          <tr>
+            <td>User mental model</td>
+            <td>“This agent works for me across tools and channels.”</td>
+            <td>“This is my private local AI workspace/app.”</td>
+          </tr>
+          <tr>
+            <td>Memory model</td>
+            <td>Persistent memory plus auto-generated skills and long-running procedural knowledge.</td>
+            <td>Explicit local memory files and knowledge folders that users can inspect directly.</td>
+          </tr>
+          <tr>
+            <td>Automation</td>
+            <td>Core part of the product positioning.</td>
+            <td>More limited and secondary to the app experience.</td>
+          </tr>
+          <tr>
+            <td>Tooling scope</td>
+            <td>Broad: browser, execution backends, sub-agents, messaging integrations, scheduling.</td>
+            <td>Narrower and more app-focused: chat, files, settings, model management, memory, local voice.</td>
+          </tr>
+          <tr>
+            <td>Install story</td>
+            <td>Fast scripted install, but still presented like an agent runtime or platform setup.</td>
+            <td>Trying to become a cleaner end-user desktop install with guided setup.</td>
+          </tr>
+          <tr>
+            <td>Model/provider posture</td>
+            <td>Provider-flexible and infrastructure-flexible.</td>
+            <td>Currently more opinionated and Ollama-centered.</td>
+          </tr>
+          <tr>
+            <td>Target comfort level</td>
+            <td>Feels better suited to technical users, operators, or advanced self-hosters.</td>
+            <td>Feels better suited to users who want a simpler private AI app on their own machine.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Philosophy Difference</h2>
+      <div class="grid-2">
+        <div>
+          <span class="pill pill-accent">Hermes</span>
+          <h3>Agent-first</h3>
+          <p>
+            Hermes is framed like an agent that keeps operating, learns over time, reaches you through
+            multiple channels, and gradually turns solved work into reusable operating knowledge.
+          </p>
+        </div>
+        <div>
+          <span class="pill pill-warm">ModernClaw</span>
+          <h3>App-first</h3>
+          <p>
+            ModernClaw is framed like a product you open, inspect, and manage directly. The local UI,
+            visible settings, and editable files are a core part of the value rather than incidental tooling.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Where ModernClaw Is Stronger</h2>
+      <ul>
+        <li>
+          <strong>User legibility:</strong> ModernClaw makes storage, memory, and settings visible in a way that is easier
+          for non-technical users to understand.
+        </li>
+        <li>
+          <strong>Desktop product feel:</strong> If the goal is a normal installable local assistant, ModernClaw has the more
+          natural shape.
+        </li>
+        <li>
+          <strong>Editable memory model:</strong> The explicit <code>SOUL.md</code>, <code>USER.md</code>, and <code>MEMORY.md</code> pattern is
+          approachable and trust-building.
+        </li>
+        <li>
+          <strong>Personal setup direction:</strong> ModernClaw can optimize for “easy local setup” rather than “general-purpose
+          autonomous agent power.”
+        </li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Where Hermes Is Stronger</h2>
+      <ul>
+        <li>
+          <strong>Breadth of capabilities:</strong> Hermes publicly claims a wider tool and channel surface area.
+        </li>
+        <li>
+          <strong>Automation story:</strong> Scheduling, gateways, and ongoing autonomous behavior are more central to Hermes.
+        </li>
+        <li>
+          <strong>Reusable skill loop:</strong> Hermes puts more emphasis on skill creation and procedural reuse as a product feature.
+        </li>
+        <li>
+          <strong>Infrastructure flexibility:</strong> Hermes is publicly presented as more backend-agnostic and deployment-flexible.
+        </li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>What This Means Strategically</h2>
+      <p>
+        ModernClaw does not need to beat Hermes by becoming a copy of Hermes. The stronger strategic move is
+        to sharpen what ModernClaw already wants to be.
+      </p>
+      <ul>
+        <li>Hermes can own the “agent platform” identity.</li>
+        <li>ModernClaw can own the “private local AI app you can actually understand and install” identity.</li>
+        <li>
+          Borrowing selective ideas from Hermes still makes sense: better setup status, stronger multimodal support,
+          automations where useful, and perhaps a lightweight skills model later.
+        </li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Likely Overlap and Competition</h2>
+      <p>
+        The overlap is real: both projects live in the open/local AI assistant space and both care about memory,
+        tools, and user ownership. But they are not optimized for the same first impression.
+      </p>
+      <ul>
+        <li>Hermes sells power, continuity, and reach.</li>
+        <li>ModernClaw should sell clarity, privacy, local control, and approachable setup.</li>
+      </ul>
+      <p>
+        If ModernClaw tries to compete with Hermes on “maximum autonomous agent surface area,” it will likely
+        become harder to install and harder to explain. If it leans into being the understandable local AI app,
+        it has a much sharper identity.
+      </p>
+    </section>
+
+    <section>
+      <h2>Source Basis</h2>
+      <p>
+        The Hermes side of this comparison is based on official public Hermes/Nous pages available on April 10, 2026.
+        The ModernClaw side is based on the current repository state, especially the local app shell, onboarding,
+        memory, settings, and model/voice flows.
+      </p>
+      <ul class="sources">
+        <li><a href="https://hermes-agent.org/">https://hermes-agent.org/</a></li>
+        <li><a href="https://nousresearch.com/hermes-agent/">https://nousresearch.com/hermes-agent/</a></li>
+        <li><a href="https://hermes-agent.ai/">https://hermes-agent.ai/</a></li>
+        <li><a href="https://hermes-agent.nousresearch.com/docs/reference/faq/">https://hermes-agent.nousresearch.com/docs/reference/faq/</a></li>
+        <li>Local repo observations from the current ModernClawBase workspace.</li>
+      </ul>
+      <p class="footnote">
+        Comparison date: April 10, 2026. Public product positioning can change over time.
+      </p>
+    </section>
+  </main>
+</body>
+</html>

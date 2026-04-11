@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { attachmentApi } from '@/services/attachments';
 import type { Message } from '@/types';
 import { generateTitleFromMessage } from '@/lib/generateTitle';
 import { contextApi } from '@/services/context';
@@ -16,7 +17,7 @@ interface ChatState {
   currentConversationId: string | null;
   streamingContent: string;
   error: string | null;
-  sendMessage: (content: string) => Promise<void>;
+  sendMessage: (content: string, imageFiles?: File[]) => Promise<void>;
   setMessageFeedback: (messageId: string, feedback?: 'up' | 'down') => Promise<void>;
   setModel: (model: string) => void;
   newConversation: (conversationId: string) => void;
@@ -36,12 +37,17 @@ export const useChatStore = create<ChatState>()((set, get) => ({
   streamingContent: '',
   error: null,
 
-  sendMessage: async (content: string) => {
+  sendMessage: async (content: string, imageFiles: File[] = []) => {
     const { currentModel, messages, currentConversationId } = get();
     const appSettings = useSettingsStore.getState().settings;
+    const trimmedContent = content.trim();
 
     if (!currentModel) {
       set({ error: 'No model selected' });
+      return;
+    }
+
+    if (!trimmedContent && imageFiles.length === 0) {
       return;
     }
 
@@ -52,12 +58,29 @@ export const useChatStore = create<ChatState>()((set, get) => ({
       conversationId = await conversationStore.createConversation(currentModel);
     }
 
+    const attachments =
+      imageFiles.length > 0
+        ? await Promise.all(
+            imageFiles.map(async (file) => {
+              const bytes = new Uint8Array(await file.arrayBuffer());
+              return attachmentApi.storeAttachment({
+                conversationId,
+                filename: file.name,
+                kind: 'image',
+                mimeType: file.type,
+                bytes,
+              });
+            })
+          )
+        : [];
+
     const userMessage: Message = {
       id: crypto.randomUUID(),
       role: 'user',
-      content,
+      content: trimmedContent,
       createdAt: new Date(),
       conversationId,
+      attachments,
     };
 
     const nextMessages = [...messages, userMessage];
@@ -73,9 +96,11 @@ export const useChatStore = create<ChatState>()((set, get) => ({
         messageCount: items.length,
         title:
           currentConversation?.title === 'New Chat' && firstUserMessage
-            ? generateTitleFromMessage(firstUserMessage.content)
+            ? generateTitleFromMessage(firstUserMessage.content || firstUserMessage.attachments?.[0]?.name || 'Image request')
             : currentConversation?.title ?? 'New Chat',
-        preview: firstUserMessage?.content.slice(0, 100),
+        preview:
+          firstUserMessage?.content.slice(0, 100) ||
+          (firstUserMessage?.attachments?.length ? `[${firstUserMessage.attachments.length} attachment${firstUserMessage.attachments.length === 1 ? '' : 's'}]` : undefined),
       });
     };
 
@@ -150,13 +175,10 @@ export const useChatStore = create<ChatState>()((set, get) => ({
       }
       await syncConversationState(nextMessages);
 
-      const conversationHistory: ChatMessage[] = messages.map((message) => ({
-        role: message.role,
-        content: message.content,
-      }));
+      const conversationHistory: ChatMessage[] = messages.map(toChatMessage);
       const { messages: contextMessages } = await contextApi.buildContext(
         conversationHistory,
-        userMessage.content,
+        toChatMessage(userMessage),
         appSettings.contextWindowSize
       );
 
@@ -323,3 +345,14 @@ export const useChatStore = create<ChatState>()((set, get) => ({
       isStreaming: false,
     }),
 }));
+
+function toChatMessage(message: Message): ChatMessage {
+  return {
+    role: message.role,
+    content: message.content,
+    images:
+      message.attachments
+        ?.filter((attachment) => attachment.kind === 'image')
+        .map((attachment) => attachment.path) ?? [],
+  };
+}

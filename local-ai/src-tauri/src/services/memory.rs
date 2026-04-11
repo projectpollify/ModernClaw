@@ -1,4 +1,4 @@
-use crate::types::{CuratorPackage, DailyLog, MemoryContext, MemoryFile};
+use crate::types::{CuratorPackage, DailyLog, MemoryContext, MemoryFile, MessageAttachment};
 use chrono::Local;
 use serde::Deserialize;
 use std::fs;
@@ -35,6 +35,8 @@ impl MemoryService {
             .map_err(|error| format!("Failed to create knowledge directory: {}", error))?;
         fs::create_dir_all(self.base_path.join("curator"))
             .map_err(|error| format!("Failed to create curator directory: {}", error))?;
+        fs::create_dir_all(self.base_path.join("attachments"))
+            .map_err(|error| format!("Failed to create attachments directory: {}", error))?;
 
         for folder in ["requests", "in-progress", "staged", "approved", "rejected", "archive"] {
             fs::create_dir_all(self.base_path.join("curator").join(folder))
@@ -210,6 +212,51 @@ impl MemoryService {
         }
 
         candidate
+    }
+
+    fn ensure_safe_conversation_id(&self, conversation_id: &str) -> Result<(), String> {
+        let relative = Path::new(conversation_id);
+
+        if conversation_id.trim().is_empty() {
+            return Err("Empty conversation id is not allowed".to_string());
+        }
+
+        let mut count = 0;
+        for component in relative.components() {
+            match component {
+                Component::Normal(_) => count += 1,
+                _ => return Err(format!("Invalid conversation id: {}", conversation_id)),
+            }
+        }
+
+        if count != 1 {
+            return Err(format!("Invalid conversation id: {}", conversation_id));
+        }
+
+        Ok(())
+    }
+
+    fn attachment_extension(filename: &str, mime_type: Option<&str>) -> String {
+        let from_name = Path::new(filename)
+            .extension()
+            .and_then(|value| value.to_str())
+            .map(|value| value.to_ascii_lowercase());
+
+        if let Some(extension) = from_name {
+            return extension;
+        }
+
+        match mime_type.unwrap_or_default() {
+            "image/png" => "png".to_string(),
+            "image/jpeg" => "jpg".to_string(),
+            "image/webp" => "webp".to_string(),
+            "image/gif" => "gif".to_string(),
+            "audio/wav" => "wav".to_string(),
+            "audio/mpeg" => "mp3".to_string(),
+            "audio/mp4" => "m4a".to_string(),
+            "audio/webm" => "webm".to_string(),
+            _ => "bin".to_string(),
+        }
     }
 
     fn move_curator_package(&self, from_stage: &str, to_stage: &str, folder_name: &str) -> Result<PathBuf, String> {
@@ -458,6 +505,46 @@ impl MemoryService {
 
     pub fn get_base_path(&self) -> String {
         self.base_path.to_string_lossy().to_string()
+    }
+
+    pub fn store_chat_attachment(
+        &self,
+        conversation_id: &str,
+        filename: &str,
+        kind: &str,
+        mime_type: Option<&str>,
+        bytes: &[u8],
+    ) -> Result<MessageAttachment, String> {
+        self.ensure_safe_conversation_id(conversation_id)?;
+
+        if bytes.is_empty() {
+            return Err("Attachment is empty".to_string());
+        }
+
+        let extension = Self::attachment_extension(filename, mime_type);
+        let safe_name = if filename.trim().is_empty() {
+            format!("attachment.{}", extension)
+        } else {
+            filename.to_string()
+        };
+        let attachment_id = format!("att-{}", Local::now().format("%Y%m%d%H%M%S%3f"));
+        let attachments_dir = self.base_path.join("attachments").join(conversation_id);
+        fs::create_dir_all(&attachments_dir)
+            .map_err(|error| format!("Failed to create attachment directory: {}", error))?;
+
+        let stored_filename = format!("{}.{}", attachment_id, extension);
+        let stored_path = attachments_dir.join(stored_filename);
+        fs::write(&stored_path, bytes)
+            .map_err(|error| format!("Failed to write attachment file: {}", error))?;
+
+        Ok(MessageAttachment {
+            id: attachment_id,
+            kind: kind.to_string(),
+            name: safe_name,
+            path: stored_path.to_string_lossy().to_string(),
+            mime_type: mime_type.map(|value| value.to_string()),
+            size_bytes: Some(bytes.len() as u64),
+        })
     }
 
     pub fn open_base_path(&self) -> Result<(), String> {

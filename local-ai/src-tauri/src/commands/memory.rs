@@ -2,7 +2,7 @@ use tauri::State;
 
 use crate::services::agent_repo::AgentRepository;
 use crate::services::memory::MemoryService;
-use crate::types::{CuratorPackage, DailyLog, MemoryContext, MemoryFile};
+use crate::types::{CuratorPackage, DailyLog, MemoryContext, MemoryFile, MessageAttachment};
 use crate::DatabaseState;
 
 pub struct MemoryState {
@@ -140,4 +140,29 @@ pub async fn memory_open_folder(
 ) -> Result<(), String> {
     let service = state.resolve_service(&db_state.db)?;
     service.open_base_path()
+}
+
+#[tauri::command]
+#[allow(non_snake_case)]
+pub async fn memory_store_chat_attachment(
+    db_state: State<'_, DatabaseState>,
+    state: State<'_, MemoryState>,
+    conversationId: String,
+    filename: String,
+    kind: String,
+    mimeType: Option<String>,
+    bytes: Vec<u8>,
+) -> Result<MessageAttachment, String> {
+    if kind != "image" && kind != "audio" {
+        return Err("Unsupported attachment kind".to_string());
+    }
+
+    let service = state.resolve_service(&db_state.db)?;
+    service.store_chat_attachment(
+        &conversationId,
+        &filename,
+        &kind,
+        mimeType.as_deref(),
+        &bytes,
+    )
 }

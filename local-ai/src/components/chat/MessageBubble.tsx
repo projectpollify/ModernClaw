@@ -1,3 +1,4 @@
+import { convertFileSrc } from '@tauri-apps/api/core';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 import { MessageContent } from './MessageContent';
@@ -40,6 +41,27 @@ export function MessageBubble({ message }: MessageBubbleProps) {
             : 'rounded-tl-sm bg-secondary text-secondary-foreground'
         )}
       >
+        {message.attachments?.some((attachment) => attachment.kind === 'image') ? (
+          <div className="mb-3 grid gap-2 sm:grid-cols-2">
+            {message.attachments
+              .filter((attachment) => attachment.kind === 'image')
+              .map((attachment) => (
+                <a
+                  key={attachment.id}
+                  href={convertFileSrc(attachment.path)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="block overflow-hidden rounded-xl border border-black/10 bg-black/5"
+                >
+                  <img
+                    src={convertFileSrc(attachment.path)}
+                    alt={attachment.name}
+                    className="max-h-72 w-full object-cover"
+                  />
+                </a>
+              ))}
+          </div>
+        ) : null}
         <MessageContent content={message.content} />
         <div
           className={cn(

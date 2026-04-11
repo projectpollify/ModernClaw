@@ -34,7 +34,7 @@ pub async fn build_context(
     memory_state: State<'_, MemoryState>,
     maxTokens: Option<usize>,
     conversationHistory: Vec<ChatMessage>,
-    userMessage: String,
+    userMessage: ChatMessage,
 ) -> Result<BuildContextResponse, String> {
     let agent_repo = AgentRepository::new(&db_state.db);
     let workspace_path = agent_repo.resolve_active_workspace_path(&memory_state.root_path)?;

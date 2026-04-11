@@ -65,7 +65,7 @@ impl ContextBuilder {
         &self,
         memory_context: &MemoryContext,
         conversation_history: &[ChatMessage],
-        user_message: &str,
+        user_message: &ChatMessage,
     ) -> Vec<ChatMessage> {
         self.build_with_stats(memory_context, conversation_history, user_message)
             .0
@@ -75,7 +75,7 @@ impl ContextBuilder {
         &self,
         memory_context: &MemoryContext,
         conversation_history: &[ChatMessage],
-        user_message: &str,
+        user_message: &ChatMessage,
     ) -> (Vec<ChatMessage>, ContextStats) {
         let mut messages = Vec::new();
         let available_tokens = self
@@ -89,10 +89,11 @@ impl ContextBuilder {
             messages.push(ChatMessage {
                 role: "system".to_string(),
                 content: system_prompt,
+                images: Vec::new(),
             });
         }
 
-        let user_message_tokens = estimate_tokens(user_message);
+        let user_message_tokens = estimate_tokens(&user_message.content);
         let remaining_for_history = available_tokens
             .saturating_sub(system_tokens)
             .saturating_sub(user_message_tokens)
@@ -114,10 +115,7 @@ impl ContextBuilder {
         history_messages.reverse();
         let included_history_count = history_messages.len();
         messages.extend(history_messages);
-        messages.push(ChatMessage {
-            role: "user".to_string(),
-            content: user_message.to_string(),
-        });
+        messages.push(user_message.clone());
 
         let total_tokens = system_tokens + history_tokens + user_message_tokens;
         let usage_percent = if self.max_context_tokens == 0 {

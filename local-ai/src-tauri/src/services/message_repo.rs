@@ -1,5 +1,5 @@
 use crate::services::database::Database;
-use crate::types::{Message, MessageFeedbackSummary};
+use crate::types::{Message, MessageAttachment, MessageFeedbackSummary};
 use chrono::{DateTime, Utc};
 
 pub struct MessageRepository<'a> {
@@ -12,16 +12,20 @@ impl<'a> MessageRepository<'a> {
     }
 
     pub fn create(&self, message: &Message) -> Result<(), String> {
+        let attachments_json = serde_json::to_string(&message.attachments)
+            .map_err(|error| format!("Failed to serialize message attachments: {}", error))?;
+
         self.db.execute(
             r#"
-            INSERT INTO messages (id, conversation_id, role, content, tokens_used, feedback, created_at)
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
+            INSERT INTO messages (id, conversation_id, role, content, attachments, tokens_used, feedback, created_at)
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
             "#,
             &[
                 &message.id,
                 &message.conversation_id,
                 &message.role,
                 &message.content,
+                &attachments_json,
                 &message.tokens_used,
                 &message.feedback,
                 &message.created_at.to_rfc3339(),
@@ -34,21 +38,25 @@ impl<'a> MessageRepository<'a> {
     pub fn get_for_conversation(&self, conversation_id: &str) -> Result<Vec<Message>, String> {
         self.db.query_all(
             r#"
-            SELECT id, conversation_id, role, content, tokens_used, feedback, created_at
+            SELECT id, conversation_id, role, content, attachments, tokens_used, feedback, created_at
             FROM messages
             WHERE conversation_id = ?1
             ORDER BY created_at ASC
             "#,
             &[&conversation_id],
             |row| {
+                let attachments: Vec<MessageAttachment> =
+                    serde_json::from_str(&row.get::<_, String>(4)?).unwrap_or_default();
+
                 Ok(Message {
                     id: row.get(0)?,
                     conversation_id: row.get(1)?,
                     role: row.get(2)?,
                     content: row.get(3)?,
-                    tokens_used: row.get(4)?,
-                    feedback: row.get(5)?,
-                    created_at: parse_rfc3339(row.get(6)?)?,
+                    attachments,
+                    tokens_used: row.get(5)?,
+                    feedback: row.get(6)?,
+                    created_at: parse_rfc3339(row.get(7)?)?,
                 })
             },
         )

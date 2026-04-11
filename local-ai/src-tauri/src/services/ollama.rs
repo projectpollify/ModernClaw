@@ -1,3 +1,4 @@
+use base64::{engine::general_purpose::STANDARD, Engine as _};
 use std::time::Duration;
 
 use futures_util::StreamExt;
@@ -79,9 +80,10 @@ impl OllamaService {
         model: &str,
         messages: Vec<ChatMessage>,
     ) -> Result<ChatResponse, String> {
+        let prepared_messages = self.prepare_messages_for_request(messages)?;
         let request = ChatRequest {
             model: model.to_string(),
-            messages,
+            messages: prepared_messages,
             stream: Some(false),
             options: None,
         };
@@ -114,9 +116,10 @@ impl OllamaService {
     where
         F: FnMut(ChatResponse) + Send,
     {
+        let prepared_messages = self.prepare_messages_for_request(messages)?;
         let request = ChatRequest {
             model: model.to_string(),
-            messages,
+            messages: prepared_messages,
             stream: Some(true),
             options,
         };
@@ -207,5 +210,31 @@ impl OllamaService {
         }
 
         Ok(())
+    }
+
+    fn prepare_messages_for_request(
+        &self,
+        messages: Vec<ChatMessage>,
+    ) -> Result<Vec<ChatMessage>, String> {
+        messages
+            .into_iter()
+            .map(|message| {
+                if message.images.is_empty() {
+                    return Ok(message);
+                }
+
+                let images = message
+                    .images
+                    .iter()
+                    .map(|path| {
+                        std::fs::read(path)
+                            .map(|bytes| STANDARD.encode(bytes))
+                            .map_err(|error| format!("Failed to read image {}: {}", path, error))
+                    })
+                    .collect::<Result<Vec<_>, _>>()?;
+
+                Ok(ChatMessage { images, ..message })
+            })
+            .collect()
     }
 }

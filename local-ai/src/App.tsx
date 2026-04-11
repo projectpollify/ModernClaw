@@ -3,6 +3,7 @@ import { BrainView } from '@/components/brain/BrainView';
 import { ChatView } from '@/components/chat/ChatView';
 import { MemoryView } from '@/components/memory/MemoryView';
 import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
+import { SetupView } from '@/components/setup/SetupView';
 import { SettingsView } from '@/components/settings/SettingsView';
 import { useTheme } from '@/hooks/useTheme';
 import { useEffect } from 'react';
@@ -108,6 +109,8 @@ function App() {
         <MemoryView />
       ) : activeView === 'brain' ? (
         <BrainView />
+      ) : activeView === 'setup' ? (
+        <SetupView />
       ) : activeView === 'settings' ? (
         <SettingsView />
       ) : (

@@ -18,6 +18,8 @@ The repo already presents as a focused single-workspace product, but the finishe
 - added thumbs up / thumbs down reply feedback with persistence
 - added a small feedback summary view in Settings
 - added `gemma4:e2b` as a lighter supported Gemma 4 option alongside the main lane
+- added a reusable setup-readiness layer across onboarding, Settings, sidebar navigation, and chat
+- added image attachments with workspace-backed storage and conversation rendering
 - rewrote visible product copy around `workspace` instead of role-management language
 - updated root docs to the ModernClawBase identity
 - removed stale planning and summary docs that no longer matched the product
@@ -35,10 +37,12 @@ The repo already presents as a focused single-workspace product, but the finishe
 The current shipped app still includes:
 - one local workspace
 - chat with conversation history
+- image prompts through attachments
 - editable `SOUL.md`, `USER.md`, and `MEMORY.md`
 - daily logs
 - flat knowledge-file loading
 - Brain suggestions and guided setup
+- shared setup-readiness checks with required vs optional items
 - curator staging and import flow
 - local Piper output and Whisper input
 - onboarding, settings, and storage visibility
@@ -47,9 +51,17 @@ This means the fuller product shape is still more complete than the unfinished b
 
 ## Current Execution Focus
 
-The next split work is no longer testing.
+The current execution focus has shifted from broad QA to packaging clarity and multimodal groundwork.
 
-The main remaining base/full seam is the hidden compatibility-friendly agent layer that still owns model and voice behavior behind the single-workspace UI.
+What is now in place:
+- one visible setup-readiness flow shared across onboarding, Setup, Settings, and chat
+- one working image-understanding path that keeps files in the local workspace
+
+Immediate next feature:
+- audio-note MVP through Whisper transcription plus attachment metadata
+
+Still important later:
+- the compatibility-friendly internal agent layer remains a base/full seam, especially around model and voice ownership
 
 ## Verified
 
@@ -60,6 +72,7 @@ Verified in this workspace:
 - the live source no longer contains the removed multi-workspace UI/state hooks
 - Curator automation can process a request and produce a staged package
 - ModernClaw can display and import a staged Curator package when it is placed in the active workspace path
+- image attachments compile cleanly from UI to workspace storage to model request path
 
 Current build notes:
 - Vite reports a large frontend bundle warning
@@ -87,13 +100,14 @@ Not built yet:
 ## Remaining To Reach Base Ready
 
 1. Audit the app for remaining compatibility-only UI, state, and terminology after the completed QA pass.
-2. Collapse or hide the internal compatibility-friendly agent layer where it still controls single-workspace model and voice behavior.
-3. Decide what minimum compatibility scaffolding must remain in the base repo for migration safety.
-4. Decide whether Curator automation should keep following active agent workspaces or be simplified into one clearer base-workspace path.
-5. Decide whether the one-box Curator intake flow belongs in base at all or remains part of the fuller multi lane.
-6. Define the base-ready milestone that separates transitional shipped scope from finished base scope.
-7. Move curator out of the base definition once the base-ready milestone is reached.
-8. Tidy remaining docs so they match the in-progress split state and then the final base state.
+2. Build the audio-note MVP on top of the new attachment pipeline.
+3. Collapse or hide the internal compatibility-friendly agent layer where it still controls single-workspace model and voice behavior.
+4. Decide what minimum compatibility scaffolding must remain in the base repo for migration safety.
+5. Decide whether Curator automation should keep following active agent workspaces or be simplified into one clearer base-workspace path.
+6. Decide whether the one-box Curator intake flow belongs in base at all or remains part of the fuller multi lane.
+7. Define the base-ready milestone that separates transitional shipped scope from finished base scope.
+8. Move curator out of the base definition once the base-ready milestone is reached.
+9. Tidy remaining docs so they match the in-progress split state and then the final base state.
 
 ## Open Questions
 

@@ -17,6 +17,7 @@ export interface Model {
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
+  images?: string[];
 }
 
 export interface ChatResponse {

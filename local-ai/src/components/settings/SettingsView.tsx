@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Button } from '@/components/ui/Button';
 import { ModelCard } from '@/components/models/ModelCard';
 import { ModelDownloader } from '@/components/models/ModelDownloader';
+import { SetupStatusPanel } from '@/components/setup/SetupStatusPanel';
 import { CURATED_FLOOR_MODELS, CURATED_PIPER_VOICES, DEFAULT_FLOOR_MODEL } from '@/lib/voiceCatalog';
 import { getEffectiveVoiceSettings } from '@/lib/voiceSettings';
 import { getDefaultVoicePaths } from '@/lib/voicePaths';
@@ -244,6 +245,8 @@ export function SettingsView() {
         ) : null}
 
         {isLoading ? <p className="text-sm text-muted-foreground">Loading settings...</p> : null}
+
+        <SetupStatusPanel description="Use this as the single readiness view for install checks, troubleshooting, and first-run confidence." />
 
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]">
           <div className="space-y-8">

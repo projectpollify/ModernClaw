@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { useSetupStatus } from '@/hooks/useSetupStatus';
 import { useSidebarStore, useViewStore } from '@/stores/uiStore';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/ScrollArea';
@@ -10,6 +11,7 @@ export function Sidebar() {
   const open = useSidebarStore((state) => state.open);
   const activeView = useViewStore((state) => state.activeView);
   const setView = useViewStore((state) => state.setView);
+  const { isCoreReady } = useSetupStatus();
 
   return (
     <aside
@@ -81,6 +83,14 @@ export function Sidebar() {
           isCollapsed={!isOpen}
         />
         <SidebarButton
+          icon={<ShieldCheckIcon className="h-4 w-4" />}
+          label="Setup"
+          isActive={activeView === 'setup'}
+          onClick={() => setView('setup')}
+          isCollapsed={!isOpen}
+          showAttention={!isCoreReady}
+        />
+        <SidebarButton
           icon={<SettingsIcon className="h-4 w-4" />}
           label="Settings"
           isActive={activeView === 'settings'}
@@ -109,12 +119,14 @@ function SidebarButton({
   isActive,
   onClick,
   isCollapsed = false,
+  showAttention = false,
 }: {
   icon: ReactNode;
   label: string;
   isActive: boolean;
   onClick: () => void;
   isCollapsed?: boolean;
+  showAttention?: boolean;
 }) {
   return (
     <button
@@ -130,9 +142,18 @@ function SidebarButton({
       )}
     >
       <span className="inline-flex h-5 w-5 items-center justify-center">{icon}</span>
-      {isCollapsed ? null : <span>{label}</span>}
+      {isCollapsed ? null : (
+        <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
+          <span>{label}</span>
+          {showAttention ? <AttentionDot /> : null}
+        </span>
+      )}
     </button>
   );
+}
+
+function AttentionDot() {
+  return <span className="inline-flex h-2.5 w-2.5 rounded-full bg-amber-500" aria-hidden="true" />;
 }
 
 function CollapsedActionButton({
@@ -215,6 +236,20 @@ function SettingsIcon({ className }: { className?: string }) {
         d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
       />
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+  );
+}
+
+function ShieldCheckIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M12 3l7 3v6c0 5-3.5 8-7 9-3.5-1-7-4-7-9V6l7-3z"
+      />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.5 12.5l1.5 1.5 3.5-4" />
     </svg>
   );
 }

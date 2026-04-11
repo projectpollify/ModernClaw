@@ -19,7 +19,7 @@ export interface BuildContextResponse {
 export const contextApi = {
   async buildContext(
     conversationHistory: ChatMessage[],
-    userMessage: string,
+    userMessage: ChatMessage,
     maxTokens = 4096
   ): Promise<BuildContextResponse> {
     return invoke('build_context', {

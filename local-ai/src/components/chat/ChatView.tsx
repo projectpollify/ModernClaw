@@ -3,6 +3,7 @@ import { ErrorBanner } from './ErrorBanner';
 import { EmptyState } from './EmptyState';
 import { MessageInput } from './MessageInput';
 import { MessageList } from './MessageList';
+import { SetupAttentionBanner } from './SetupAttentionBanner';
 import { useChatStore } from '@/stores/chatStore';
 
 export function ChatView() {
@@ -22,6 +23,7 @@ export function ChatView() {
 
   return (
     <div className="flex h-full flex-col">
+      <SetupAttentionBanner />
       <ErrorBanner />
       <div ref={scrollRef} className="flex-1 overflow-y-auto">
         {messages.length === 0 ? (
