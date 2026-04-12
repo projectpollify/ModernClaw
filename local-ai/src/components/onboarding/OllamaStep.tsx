@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/Button';
+import { useSetupActions } from '@/hooks/useSetupActions';
 import { useModelStore } from '@/stores/modelStore';
 
 interface OllamaStepProps {
@@ -10,6 +11,14 @@ interface OllamaStepProps {
 export function OllamaStep({ onNext, onBack }: OllamaStepProps) {
   const ollamaStatus = useModelStore((state) => state.ollamaStatus);
   const checkStatus = useModelStore((state) => state.checkStatus);
+  const {
+    openOllamaDownload,
+    startOllama,
+    isOpeningDownload,
+    isStartingOllama,
+    actionError,
+    clearActionError,
+  } = useSetupActions();
   const [isChecking, setIsChecking] = useState(true);
 
   const runCheck = async () => {
@@ -72,12 +81,29 @@ export function OllamaStep({ onNext, onBack }: OllamaStepProps) {
           </div>
 
           <div className="mt-6">
-            <Button variant="outline" onClick={() => void runCheck()}>
-              Check Again
-            </Button>
+            <div className="flex flex-wrap justify-center gap-3">
+              <Button variant="outline" onClick={() => void openOllamaDownload()} disabled={isOpeningDownload}>
+                {isOpeningDownload ? 'Opening Download...' : 'Download Ollama'}
+              </Button>
+              <Button variant="outline" onClick={() => void startOllama()} disabled={isStartingOllama}>
+                {isStartingOllama ? 'Starting Ollama...' : 'Start Ollama'}
+              </Button>
+              <Button variant="outline" onClick={() => void runCheck()}>
+                Check Again
+              </Button>
+            </div>
           </div>
         </StatusCard>
       )}
+
+      {actionError ? (
+        <div className="mt-5 flex items-center justify-between gap-3 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-600">
+          <span>{actionError}</span>
+          <Button variant="ghost" size="sm" onClick={clearActionError}>
+            Dismiss
+          </Button>
+        </div>
+      ) : null}
     </StepShell>
   );
 }

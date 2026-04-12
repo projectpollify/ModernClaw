@@ -19,7 +19,11 @@ The repo already presents as a focused single-workspace product, but the finishe
 - added a small feedback summary view in Settings
 - added `gemma4:e2b` as a lighter supported Gemma 4 option alongside the main lane
 - added a reusable setup-readiness layer across onboarding, Settings, sidebar navigation, and chat
+- added first-pass setup actions for clean-machine flow, including Ollama download/start helpers and direct recommended-model install from setup surfaces
 - added image attachments with workspace-backed storage and conversation rendering
+- added audio-note attachments with Whisper transcription, workspace-backed storage, and conversation rendering
+- narrowed the hidden runtime profile layer to built-in Main Workspace and Joe Support profiles
+- removed generic create/delete runtime hooks for user-managed brains from the base app path
 - rewrote visible product copy around `workspace` instead of role-management language
 - updated root docs to the ModernClawBase identity
 - removed stale planning and summary docs that no longer matched the product
@@ -27,15 +31,18 @@ The repo already presents as a focused single-workspace product, but the finishe
 ## Locked Decisions
 
 - the split work so far has primarily removed the multi-Brain aspects of the app
+- the base runtime is now being tightened around one user workspace plus built-in Joe Support
 - curator remains part of the currently shipped product during the transition
 - curator is not required to define the finished `ModernClawBase` product
 - curator is intended to complete the fuller multi product once the base edition is ready
+- Rosie stays out of the base runtime surface and remains an external-first verification lane for now
 - documentation should describe transition state honestly until the split is finished
 
 ## Current Transition State
 
 The current shipped app still includes:
 - one local workspace
+- one built-in Joe Support profile that shares the main workspace root
 - chat with conversation history
 - image prompts through attachments
 - editable `SOUL.md`, `USER.md`, and `MEMORY.md`
@@ -45,23 +52,29 @@ The current shipped app still includes:
 - shared setup-readiness checks with required vs optional items
 - curator staging and import flow
 - local Piper output and Whisper input
+- audio-note recording and audio-file attachments
 - onboarding, settings, and storage visibility
 
 This means the fuller product shape is still more complete than the unfinished base edition.
 
 ## Current Execution Focus
 
-The current execution focus has shifted from broad QA to packaging clarity and multimodal groundwork.
+The current execution focus has shifted from broad QA and runtime seam cleanup to easy install, packaging clarity, and clean-machine setup.
 
 What is now in place:
 - one visible setup-readiness flow shared across onboarding, Setup, Settings, and chat
+- one first-pass setup-action flow that can open Ollama download, attempt to start Ollama, and install the recommended Gemma 4 model
 - one working image-understanding path that keeps files in the local workspace
+- one working audio-note path that transcribes with Whisper, stores the attachment locally, and includes transcript text in the user prompt
+- one built-in profile direction for base: Main Workspace plus Joe Support on the same workspace root
 
-Immediate next feature:
-- audio-note MVP through Whisper transcription plus attachment metadata
+Immediate next focus:
+- polish the clean-machine setup flow so every required blocker has a direct, obvious next step
+- make the Ollama -> model download -> ready-to-chat path feel direct and obvious
+- keep voice optional so the base install story stays simple
 
 Still important later:
-- the compatibility-friendly internal agent layer remains a base/full seam, especially around model and voice ownership
+- remove or quarantine any leftover compatibility scaffolding that no longer serves the base runtime
 
 ## Verified
 
@@ -73,11 +86,16 @@ Verified in this workspace:
 - Curator automation can process a request and produce a staged package
 - ModernClaw can display and import a staged Curator package when it is placed in the active workspace path
 - image attachments compile cleanly from UI to workspace storage to model request path
+- the live source now wires audio-note recording, Whisper transcription, attachment storage, history persistence, and conversation rendering through the shared attachment pipeline
+- the hidden runtime profile layer is being narrowed to built-in Main Workspace and Joe Support profiles instead of generic user-managed brains
+- `npm run build` still succeeds after the built-in Main Workspace plus Joe Support profile cleanup
+- `cargo check` still succeeds after the built-in Main Workspace plus Joe Support profile cleanup
+- `npm run build` and `cargo check` still succeed after adding the first-pass setup-action flow
 
 Current build notes:
 - Vite reports a large frontend bundle warning
 - Rust still has a few existing dead-code warnings
-- the current Curator integration still depends on active-workspace path alignment between automation and app runtime
+- the current Curator integration still carries compatibility-oriented workspace assumptions that should be simplified further for base
 
 ## Curator / Knowledge Status
 
@@ -99,19 +117,18 @@ Not built yet:
 
 ## Remaining To Reach Base Ready
 
-1. Audit the app for remaining compatibility-only UI, state, and terminology after the completed QA pass.
-2. Build the audio-note MVP on top of the new attachment pipeline.
-3. Collapse or hide the internal compatibility-friendly agent layer where it still controls single-workspace model and voice behavior.
-4. Decide what minimum compatibility scaffolding must remain in the base repo for migration safety.
-5. Decide whether Curator automation should keep following active agent workspaces or be simplified into one clearer base-workspace path.
-6. Decide whether the one-box Curator intake flow belongs in base at all or remains part of the fuller multi lane.
-7. Define the base-ready milestone that separates transitional shipped scope from finished base scope.
-8. Move curator out of the base definition once the base-ready milestone is reached.
-9. Tidy remaining docs so they match the in-progress split state and then the final base state.
+1. Polish clean-machine setup into a direct install flow with strong guidance and fewer dead ends.
+2. Audit the app for remaining compatibility-only UI, state, and terminology after the profile-layer cleanup.
+3. Decide what minimum compatibility scaffolding must remain in the base repo for migration safety.
+4. Decide whether Curator automation should keep following compatibility-era workspace assumptions or be simplified into one clearer base-workspace path.
+5. Decide whether the one-box Curator intake flow belongs in base at all or remains part of the fuller multi lane.
+6. Define the base-ready milestone that separates transitional shipped scope from finished base scope.
+7. Move curator out of the base definition once the base-ready milestone is reached.
+8. Tidy remaining docs so they match the in-progress split state and then the final base state.
 
 ## Open Questions
 
-- whether the internal compatibility-friendly agent layer should stay hidden, be simplified into workspace settings, or be removed from base entirely
+- whether Joe Support should remain a hidden support lane or later gain a small surfaced entry point in base
 - whether the current Brain naming and positioning is final for the base edition
 - whether NotebookLM-powered curation belongs in base, multi, or only external automation
 - whether Rosie verification should stay external first or become a surfaced in-app review layer

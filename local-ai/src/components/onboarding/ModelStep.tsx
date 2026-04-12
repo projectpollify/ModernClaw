@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/Button';
+import { useSetupActions } from '@/hooks/useSetupActions';
 import { CURATED_FLOOR_MODELS, DEFAULT_FLOOR_MODEL } from '@/lib/voiceCatalog';
 import { cn } from '@/lib/utils';
 import { useModelStore } from '@/stores/modelStore';
@@ -11,11 +12,11 @@ interface ModelStepProps {
 
 export function ModelStep({ onNext, onBack }: ModelStepProps) {
   const models = useModelStore((state) => state.models);
-  const downloadModel = useModelStore((state) => state.downloadModel);
   const downloadingModel = useModelStore((state) => state.downloadingModel);
   const loadModels = useModelStore((state) => state.loadModels);
   const error = useModelStore((state) => state.error);
   const clearError = useModelStore((state) => state.clearError);
+  const { installRecommendedModel, isInstallingRecommendedModel, actionError, clearActionError } = useSetupActions();
   const [selectedModel, setSelectedModel] = useState(DEFAULT_FLOOR_MODEL);
 
   useEffect(() => {
@@ -27,7 +28,13 @@ export function ModelStep({ onNext, onBack }: ModelStepProps) {
 
   const handleDownload = async () => {
     clearError();
-    await downloadModel(selectedModel);
+    if (selectedModel === DEFAULT_FLOOR_MODEL) {
+      await installRecommendedModel();
+      return;
+    }
+
+    const modelStore = useModelStore.getState();
+    await modelStore.downloadModel(selectedModel);
     await loadModels();
   };
 
@@ -95,10 +102,25 @@ export function ModelStep({ onNext, onBack }: ModelStepProps) {
         </div>
       ) : null}
 
+      {actionError ? (
+        <div className="mt-5 flex items-center justify-between gap-3 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-600">
+          <span>{actionError}</span>
+          <Button variant="ghost" size="sm" onClick={clearActionError}>
+            Dismiss
+          </Button>
+        </div>
+      ) : null}
+
       {!hasModels ? (
         <div className="mt-6 flex items-center justify-center">
-          <Button onClick={() => void handleDownload()} disabled={Boolean(downloadingModel)}>
-            {downloadingModel ? `Downloading ${downloadingModel}...` : `Download ${selectedModel}`}
+          <Button onClick={() => void handleDownload()} disabled={Boolean(downloadingModel) || isInstallingRecommendedModel}>
+            {isInstallingRecommendedModel
+              ? 'Installing Recommended Model...'
+              : downloadingModel
+                ? `Downloading ${downloadingModel}...`
+                : selectedModel === DEFAULT_FLOOR_MODEL
+                  ? 'Install Recommended Model'
+                  : `Download ${selectedModel}`}
           </Button>
         </div>
       ) : null}
