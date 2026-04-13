@@ -79,8 +79,8 @@ Still important later:
 ## Verified
 
 Verified in this workspace:
-- `npm run build` succeeds in [local-ai](C:\Users\pento\Desktop\ModernClawBase\local-ai)
-- `cargo check` succeeds in [src-tauri](C:\Users\pento\Desktop\ModernClawBase\local-ai\src-tauri)
+- `npm run build` succeeds in `local-ai/`
+- `cargo check` succeeds in `local-ai/src-tauri/`
 - `npm run tauri:dev` launches and remains resident long enough to hold the Vite dev port and run `local-ai.exe`
 - the live source no longer contains the removed multi-workspace UI/state hooks
 - Curator automation can process a request and produce a staged package

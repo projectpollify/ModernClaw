@@ -7,10 +7,10 @@ Please do not report security vulnerabilities in public GitHub issues.
 If you believe you have found a vulnerability:
 
 1. Do not open a public issue with exploit details.
-2. Contact the repository owner or maintainers privately through GitHub.
+2. Contact the maintainers privately at `shawn@modernclaw.ai`.
 3. Include reproduction details, affected versions, impact, and any suggested mitigation if you have one.
 
-Until a dedicated security email or advisory workflow is published, private maintainer contact through GitHub is the preferred path.
+If email is not practical, private maintainer contact through GitHub is the fallback path.
 
 ## Scope
 

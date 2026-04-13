@@ -4,11 +4,6 @@
 
 This runbook records the bring-up, recovery, and basic verification steps for the ModernClaw base workspace.
 
-## Current Workspace
-
-- Repo root: `C:\Users\pento\Desktop\ModernClawBase`
-- App source: `C:\Users\pento\Desktop\ModernClawBase\local-ai`
-
 ## Daily Bring-Up
 
 1. Make sure Ollama is installed.
@@ -21,7 +16,7 @@ This runbook records the bring-up, recovery, and basic verification steps for th
 ### Commands
 
 ```powershell
-cd "C:\Users\pento\Desktop\ModernClawBase\local-ai"
+cd "C:\path\to\ModernClaw\local-ai"
 npm run tauri:dev
 ```
 
@@ -97,21 +92,21 @@ A tester should be able to clone the repo, follow the docs, and reach normal cha
 ### Frontend + TypeScript
 
 ```powershell
-cd "C:\Users\pento\Desktop\ModernClawBase\local-ai"
+cd "C:\path\to\ModernClaw\local-ai"
 npm run build
 ```
 
 ### Rust / Tauri Backend
 
 ```powershell
-cd "C:\Users\pento\Desktop\ModernClawBase\local-ai\src-tauri"
+cd "C:\path\to\ModernClaw\local-ai\src-tauri"
 cargo check
 ```
 
 ## Packaged Build
 
 ```powershell
-cd "C:\Users\pento\Desktop\ModernClawBase\local-ai"
+cd "C:\path\to\ModernClaw\local-ai"
 npm run tauri:build
 ```
 
@@ -122,9 +117,9 @@ npm run tauri:build
 If Tauri build paths or generated artifacts look stale:
 
 ```powershell
-cd "C:\Users\pento\Desktop\ModernClawBase\local-ai\src-tauri"
+cd "C:\path\to\ModernClaw\local-ai\src-tauri"
 cargo clean
-cd "C:\Users\pento\Desktop\ModernClawBase\local-ai"
+cd "C:\path\to\ModernClaw\local-ai"
 npm run tauri:dev
 ```
 
@@ -167,7 +162,7 @@ Important current limitation:
 - Piper and Whisper executables and model files are not auto-downloaded yet
 - clean-machine setup still requires manual dependency placement or installation
 
-### Current Validated Piper Setup
+### Example Validated Windows Piper Setup
 
 - Piper executable: `C:\Tools\piper\piper.exe`
 - Amy model: `%APPDATA%\LocalAI\tools\piper\voices\en_US-amy-medium.onnx`
@@ -175,7 +170,9 @@ Important current limitation:
 - Joe model: `%APPDATA%\LocalAI\tools\piper\voices\en_US-joe-medium.onnx`
 - Joe metadata: `%APPDATA%\LocalAI\tools\piper\voices\en_US-joe-medium.onnx.json`
 
-### Current Validated Whisper Setup
+These paths are examples from a validated Windows setup, not required fixed install locations.
+
+### Example Validated Windows Whisper Setup
 
 - Whisper executable: `C:\Tools\whisper\release\whisper-cli.exe`
 - Whisper model: `%APPDATA%\LocalAI\tools\whisper\models\ggml-base.en.bin`
@@ -212,10 +209,6 @@ The app uses the `LocalAI` app-data root for runtime files, including:
 - `knowledge/`
 - `curator/`
 - `tools/`
-
-When managed agent workspaces are in use, active runtime files may instead live under:
-
-- fuller multi-product compatibility paths outside the intended base runtime
 
 ## Current Model Stack
 
