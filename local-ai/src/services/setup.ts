@@ -1,19 +1,23 @@
 import { invoke } from '@tauri-apps/api/core';
 
-const OLLAMA_DOWNLOAD_URL = 'https://ollama.com/download';
+const DIRECT_ENGINE_DOWNLOAD_URL = 'https://github.com/ggerganov/llama.cpp/releases';
 
 export const setupApi = {
   async openExternal(target: string): Promise<void> {
     return invoke('setup_open_external', { target });
   },
 
-  async openOllamaDownload(): Promise<void> {
-    return invoke('setup_open_external', { target: OLLAMA_DOWNLOAD_URL });
+  async openDirectEngineDownload(): Promise<void> {
+    return invoke('setup_open_external', { target: DIRECT_ENGINE_DOWNLOAD_URL });
   },
 
-  async startOllama(): Promise<void> {
-    return invoke('setup_start_ollama');
+  async startDirectEngine(): Promise<void> {
+    return invoke('setup_start_direct_engine');
+  },
+
+  async stopDirectEngine(): Promise<void> {
+    return invoke('setup_stop_direct_engine');
   },
 };
 
-export { OLLAMA_DOWNLOAD_URL };
+export { DIRECT_ENGINE_DOWNLOAD_URL };

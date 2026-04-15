@@ -17,8 +17,8 @@ impl<'a> MessageRepository<'a> {
 
         self.db.execute(
             r#"
-            INSERT INTO messages (id, conversation_id, role, content, attachments, tokens_used, feedback, created_at)
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
+            INSERT INTO messages (id, conversation_id, role, content, attachments, tokens_used, feedback, feedback_note, created_at)
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)
             "#,
             &[
                 &message.id,
@@ -28,6 +28,7 @@ impl<'a> MessageRepository<'a> {
                 &attachments_json,
                 &message.tokens_used,
                 &message.feedback,
+                &message.feedback_note,
                 &message.created_at.to_rfc3339(),
             ],
         )?;
@@ -38,7 +39,7 @@ impl<'a> MessageRepository<'a> {
     pub fn get_for_conversation(&self, conversation_id: &str) -> Result<Vec<Message>, String> {
         self.db.query_all(
             r#"
-            SELECT id, conversation_id, role, content, attachments, tokens_used, feedback, created_at
+            SELECT id, conversation_id, role, content, attachments, tokens_used, feedback, feedback_note, created_at
             FROM messages
             WHERE conversation_id = ?1
             ORDER BY created_at ASC
@@ -56,16 +57,22 @@ impl<'a> MessageRepository<'a> {
                     attachments,
                     tokens_used: row.get(5)?,
                     feedback: row.get(6)?,
-                    created_at: parse_rfc3339(row.get(7)?)?,
+                    feedback_note: row.get(7)?,
+                    created_at: parse_rfc3339(row.get(8)?)?,
                 })
             },
         )
     }
 
-    pub fn update_feedback(&self, id: &str, feedback: Option<&str>) -> Result<(), String> {
+    pub fn update_feedback(
+        &self,
+        id: &str,
+        feedback: Option<&str>,
+        feedback_note: Option<&str>,
+    ) -> Result<(), String> {
         self.db.execute(
-            "UPDATE messages SET feedback = ?2 WHERE id = ?1",
-            &[&id, &feedback],
+            "UPDATE messages SET feedback = ?2, feedback_note = ?3 WHERE id = ?1",
+            &[&id, &feedback, &feedback_note],
         )?;
         Ok(())
     }

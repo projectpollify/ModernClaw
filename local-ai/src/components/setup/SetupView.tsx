@@ -34,7 +34,7 @@ export function SetupView() {
         <section className="grid gap-6 lg:grid-cols-3">
           <InfoCard
             title="What must be ready"
-            body="Ollama needs to be running, at least one local model needs to be installed, and the workspace files need to exist."
+            body="llama-server needs to be configured and running, a GGUF model path needs to be valid, and the workspace files need to exist."
           />
           <InfoCard
             title="What can wait"

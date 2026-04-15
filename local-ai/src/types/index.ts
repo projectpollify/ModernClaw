@@ -37,7 +37,29 @@ export interface Message {
   conversationId: string;
   attachments?: MessageAttachment[];
   tokensUsed?: number;
+  metrics?: MessageMetrics;
   feedback?: 'up' | 'down';
+  feedbackNote?: string;
+}
+
+export interface MessageContextStats {
+  systemTokens: number;
+  historyTokens: number;
+  totalTokens: number;
+  maxTokens: number;
+  messagesIncluded: number;
+  messagesTruncated: number;
+  usagePercent: number;
+}
+
+export interface MessageMetrics {
+  model?: string;
+  promptTokens?: number;
+  outputTokens?: number;
+  totalDurationMs?: number;
+  tokensPerSecond?: number;
+  finishReason?: string;
+  context?: MessageContextStats;
 }
 
 export interface MessageAttachment {

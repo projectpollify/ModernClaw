@@ -36,6 +36,7 @@ function toMessageDto(message: Message) {
     attachments: message.attachments ?? [],
     tokensUsed: message.tokensUsed,
     feedback: message.feedback,
+    feedbackNote: message.feedbackNote,
     createdAt: message.createdAt,
   };
 }
@@ -49,6 +50,7 @@ function fromMessageDto(dto: any): Message {
     attachments: dto.attachments ?? [],
     tokensUsed: dto.tokensUsed ?? undefined,
     feedback: dto.feedback ?? undefined,
+    feedbackNote: dto.feedbackNote ?? undefined,
     createdAt: new Date(dto.createdAt),
   };
 }
@@ -104,10 +106,11 @@ export const historyApi = {
     return messages.map(fromMessageDto);
   },
 
-  async setMessageFeedback(messageId: string, feedback?: 'up' | 'down'): Promise<void> {
+  async setMessageFeedback(messageId: string, feedback?: 'up' | 'down', feedbackNote?: string): Promise<void> {
     return invoke('message_set_feedback', {
       messageId,
       feedback: feedback ?? null,
+      feedbackNote: feedbackNote ?? null,
     });
   },
 

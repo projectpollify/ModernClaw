@@ -1,62 +1,57 @@
-import { useState } from 'react';
-import { ModelDownloadProgressCard } from '@/components/models/ModelDownloadProgressCard';
-import { CURATED_FLOOR_MODELS } from '@/lib/voiceCatalog';
-import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/Button';
+import { CURATED_FLOOR_MODELS, formatWorkspaceModelName } from '@/lib/voiceCatalog';
 import { useModelStore } from '@/stores/modelStore';
+import { useSettingsStore } from '@/stores/settingsStore';
+import { useViewStore } from '@/stores/uiStore';
 
 export function ModelDownloader() {
-  const [customModel, setCustomModel] = useState('');
-  const downloadModel = useModelStore((state) => state.downloadModel);
-  const downloadingModel = useModelStore((state) => state.downloadingModel);
-  const downloadProgress = useModelStore((state) => state.downloadProgress);
-
-  const handleDownload = (name: string) => {
-    void downloadModel(name);
-  };
+  const setView = useViewStore((state) => state.setView);
+  const settings = useSettingsStore((state) => state.settings);
+  const engineStatus = useModelStore((state) => state.engineStatus);
+  const refresh = useModelStore((state) => state.refresh);
 
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border border-border bg-background/70 p-4 text-sm text-muted-foreground">
-        ModernClaw is currently tuned around the Gemma 4 family. Start with the primary lane for the strongest local quality, or use the lighter 2B sibling when you want a smaller supported option on the same track.
+        ModernClaw can launch the supported Gemma 4 workspace models directly through
+        <code className="mx-1 rounded bg-secondary px-1.5 py-0.5 text-xs">llama-server.exe</code>.
+        Leave the advanced GGUF override blank unless you want to force a specific local file.
+      </div>
+
+      <div className="rounded-2xl border border-border bg-background/70 p-4">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Recommended Aliases</p>
+        <div className="mt-3 grid gap-2">
+          {CURATED_FLOOR_MODELS.map((model) => (
+            <div key={model.name} className="rounded-xl border border-border/70 px-3 py-2 text-sm">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="font-medium">{model.label}</p>
+                  <p className="text-xs text-muted-foreground">{model.name}</p>
+                </div>
+                <span className="text-muted-foreground">{model.laneLabel}</span>
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">{model.description}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-border bg-background/70 p-4 text-sm">
+        <p className="font-medium">Current model source</p>
+        <p className="mt-2 break-all text-muted-foreground">
+          {settings.directEngineModelPath || formatWorkspaceModelName(settings.defaultModel) || 'No workspace model selected yet.'}
+        </p>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Engine status: {engineStatus?.running ? 'running' : 'offline'}.
+        </p>
       </div>
 
       <div className="flex flex-wrap gap-2">
-        {CURATED_FLOOR_MODELS.map((model) => (
-          <button
-            key={model.name}
-            onClick={() => handleDownload(model.name)}
-            disabled={Boolean(downloadingModel)}
-            className={cn(
-              'rounded-xl border border-border bg-background px-3 py-2 text-left text-sm transition-colors',
-              'hover:bg-accent hover:text-accent-foreground',
-              'disabled:cursor-not-allowed disabled:opacity-50'
-            )}
-            title={model.description}
-          >
-            <span className="font-medium">{model.name}</span>
-            <span className="ml-2 text-muted-foreground">{model.size}</span>
-          </button>
-        ))}
+        <Button onClick={() => setView('settings')}>Open Settings</Button>
+        <Button variant="outline" onClick={() => void refresh()}>
+          Refresh Models
+        </Button>
       </div>
-
-      <div className="flex gap-2">
-        <input
-          type="text"
-          value={customModel}
-          onChange={(event) => setCustomModel(event.target.value)}
-          placeholder="Optional custom model, e.g. llama3.1:8b"
-          className="flex-1 rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none transition-colors focus:border-primary/50"
-        />
-        <button
-          onClick={() => handleDownload(customModel)}
-          disabled={!customModel.trim() || Boolean(downloadingModel)}
-          className="rounded-xl bg-primary px-4 py-2 text-sm text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          Download
-        </button>
-      </div>
-
-      {downloadingModel && downloadProgress ? <ModelDownloadProgressCard progress={downloadProgress} /> : null}
     </div>
   );
 }

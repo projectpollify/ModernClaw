@@ -5,7 +5,7 @@ import { useModelStore } from '@/stores/modelStore';
 export function ModelList() {
   const models = useModelStore((state) => state.models);
   const isLoading = useModelStore((state) => state.isLoading);
-  const ollamaStatus = useModelStore((state) => state.ollamaStatus);
+  const engineStatus = useModelStore((state) => state.engineStatus);
   const error = useModelStore((state) => state.error);
   const clearError = useModelStore((state) => state.clearError);
   const refresh = useModelStore((state) => state.refresh);
@@ -17,7 +17,7 @@ export function ModelList() {
           <div>
             <h2 className="text-2xl font-semibold tracking-tight">Model Management</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Choose the active model, download new ones, and prune what you do not need.
+              Choose the active direct-engine model, verify discovery, and reveal local GGUF files.
             </p>
           </div>
           <button
@@ -28,9 +28,9 @@ export function ModelList() {
           </button>
         </div>
 
-        {!ollamaStatus?.running ? (
+        {!engineStatus?.running ? (
           <div className="mb-6 rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-4 text-sm text-yellow-700">
-            Ollama is not running. Start Ollama to manage local models.
+            Direct Engine is not running. Start llama-server to verify served models and chat readiness.
           </div>
         ) : null}
 
@@ -45,7 +45,7 @@ export function ModelList() {
 
         <section className="mb-8 rounded-3xl border border-border bg-background/70 p-5 shadow-sm">
           <h3 className="mb-3 text-sm font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-            Download
+            Direct Engine Setup
           </h3>
           <ModelDownloader />
         </section>
@@ -53,7 +53,7 @@ export function ModelList() {
         <section className="rounded-3xl border border-border bg-background/70 p-5 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-              Installed Models
+              Discovered Models
             </h3>
             <span className="text-sm text-muted-foreground">{models.length}</span>
           </div>
@@ -62,7 +62,7 @@ export function ModelList() {
             <p className="text-sm text-muted-foreground">Loading models...</p>
           ) : models.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              No models installed yet. Download one above to get started.
+              No models discovered yet. Configure a GGUF model path in Settings, then refresh.
             </p>
           ) : (
             <div className="grid gap-4">

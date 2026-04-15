@@ -6,6 +6,9 @@ export interface Model {
   modified_at: string;
   size: number;
   digest: string;
+  path?: string | null;
+  source: string;
+  served: boolean;
   details: {
     format?: string;
     family?: string;
@@ -27,26 +30,23 @@ export interface ChatResponse {
   done: boolean;
   total_duration?: number;
   eval_count?: number;
+  prompt_eval_count?: number;
+  finish_reason?: string;
 }
 
-export interface OllamaStatus {
+export interface DirectEngineStatus {
   running: boolean;
-  version?: string;
-  error?: string;
+  baseUrl: string;
+  executablePath?: string | null;
+  executableFound: boolean;
+  modelPath?: string | null;
+  modelFound: boolean;
+  error?: string | null;
 }
 
-export interface ModelPullProgress {
-  model: string;
-  status: string;
-  digest?: string;
-  total?: number;
-  completed?: number;
-  done: boolean;
-}
-
-export const ollamaApi = {
-  async checkStatus(): Promise<OllamaStatus> {
-    return invoke('check_ollama_status');
+export const engineApi = {
+  async checkStatus(): Promise<DirectEngineStatus> {
+    return invoke('check_direct_engine_status');
   },
 
   async listModels(): Promise<Model[]> {
@@ -68,27 +68,5 @@ export const ollamaApi = {
     } finally {
       unlisten();
     }
-  },
-
-  async pullModel(name: string, onProgress?: (progress: ModelPullProgress) => void): Promise<void> {
-    const unlisten = onProgress
-      ? await listen<ModelPullProgress>('model-pull-progress', (event) => {
-          if (event.payload.model === name) {
-            onProgress(event.payload);
-          }
-        })
-      : null;
-
-    try {
-      return await invoke('pull_model', { name });
-    } finally {
-      if (unlisten) {
-        unlisten();
-      }
-    }
-  },
-
-  async deleteModel(name: string): Promise<void> {
-    return invoke('delete_model', { name });
   },
 };

@@ -7,7 +7,7 @@ import { SetupAttentionBanner } from './SetupAttentionBanner';
 import { useChatStore } from '@/stores/chatStore';
 
 export function ChatView() {
-  const { messages, isLoading, streamingContent } = useChatStore();
+  const { messages, isLoading, streamingContent, streamingMetrics } = useChatStore();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -19,7 +19,7 @@ export function ChatView() {
       top: scrollRef.current.scrollHeight,
       behavior: 'smooth',
     });
-  }, [messages, isLoading, streamingContent]);
+  }, [messages, isLoading, streamingContent, streamingMetrics]);
 
   return (
     <div className="flex h-full flex-col">

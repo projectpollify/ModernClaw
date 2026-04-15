@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { useSetupStatus } from '@/hooks/useSetupStatus';
 import { useSidebarStore, useViewStore } from '@/stores/uiStore';
 import { cn } from '@/lib/utils';
+import brandIcon from '@/assets/brand/modernclaw-icon.png';
 import { ScrollArea } from '@/components/ui/ScrollArea';
 import { ConversationList } from './ConversationList';
 import { NewChatButton } from './NewChatButton';
@@ -23,7 +24,7 @@ export function Sidebar() {
     >
       <div
         className={cn(
-          'flex h-14 items-center border-b border-border',
+          'flex h-16 items-center border-b border-border',
           isOpen ? 'justify-start px-4' : 'justify-center px-2'
         )}
       >
@@ -37,15 +38,19 @@ export function Sidebar() {
           aria-label={isOpen ? 'Sidebar open' : 'Expand sidebar'}
           title={isOpen ? undefined : 'Expand sidebar'}
         >
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary text-sm font-semibold text-primary-foreground">
-            MC
-          </div>
           {isOpen ? (
-            <div>
-              <p className="text-sm font-semibold">ModernClaw</p>
-              <p className="text-xs text-muted-foreground">Private desktop workspace</p>
+            <div className="flex items-center gap-2.5">
+              <img src={brandIcon} alt="ModernClaw" className="h-8 w-8 shrink-0 object-contain" />
+              <div className="min-w-0">
+                <p className="text-[1.05rem] font-semibold leading-none tracking-[-0.02em] text-foreground">
+                  ModernClaw
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">Local Private Workspace</p>
+              </div>
             </div>
-          ) : null}
+          ) : (
+            <img src={brandIcon} alt="ModernClaw" className="h-8 w-8 object-contain" />
+          )}
         </button>
       </div>
 

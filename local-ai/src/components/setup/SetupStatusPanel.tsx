@@ -1,12 +1,10 @@
-import { ModelDownloadProgressCard } from '@/components/models/ModelDownloadProgressCard';
 import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/Button';
 import { useSetupActions } from '@/hooks/useSetupActions';
-import { cn } from '@/lib/utils';
 import { useSetupStatus } from '@/hooks/useSetupStatus';
 import type { SetupChecklistItem, SetupNextStep } from '@/lib/setupStatus';
+import { cn } from '@/lib/utils';
 import { memoryApi } from '@/services/memory';
-import { useModelStore } from '@/stores/modelStore';
 import { useViewStore } from '@/stores/uiStore';
 
 interface SetupStatusPanelProps {
@@ -23,19 +21,17 @@ export function SetupStatusPanel({
   compact = false,
 }: SetupStatusPanelProps) {
   const { requiredItems, optionalItems, summary, nextStep, isRefreshing, runRefresh, settings, memoryBasePath } = useSetupStatus();
-  const ollamaStatus = useModelStore((state) => state.ollamaStatus);
-  const downloadProgress = useModelStore((state) => state.downloadProgress);
   const setView = useViewStore((state) => state.setView);
   const {
-    openOllamaDownload,
-    startOllama,
-    installRecommendedModel,
+    openDirectEngineDownload,
+    startDirectEngine,
+    stopDirectEngine,
+    openConfiguredModel,
     initializeWorkspace,
     isOpeningDownload,
-    isStartingOllama,
-    isInstallingRecommendedModel,
+    isStartingDirectEngine,
+    isStoppingDirectEngine,
     isInitializingWorkspace,
-    isDownloadingAnyModel,
     actionError,
     actionNotice,
     clearActionError,
@@ -55,17 +51,17 @@ export function SetupStatusPanel({
   };
 
   const renderSetupActions = (step: SetupNextStep | SetupChecklistItem) => {
-    if (step.id === 'ollama') {
+    if (step.id === 'engine') {
       return (
         <>
-          <Button variant="outline" size="sm" onClick={() => void openOllamaDownload()} disabled={isOpeningDownload}>
-            {isOpeningDownload ? 'Opening Download...' : 'Download Ollama'}
+          <Button variant="outline" size="sm" onClick={() => void openDirectEngineDownload()} disabled={isOpeningDownload}>
+            {isOpeningDownload ? 'Opening Download...' : 'Get llama.cpp'}
           </Button>
-          <Button variant="outline" size="sm" onClick={() => void startOllama()} disabled={isStartingOllama}>
-            {isStartingOllama ? 'Starting Ollama...' : 'Start Ollama'}
+          <Button size="sm" onClick={() => void startDirectEngine()} disabled={isStartingDirectEngine}>
+            {isStartingDirectEngine ? 'Starting...' : 'Start Direct Engine'}
           </Button>
-          <Button variant="outline" size="sm" onClick={() => void runRefresh()} disabled={isRefreshing}>
-            {isRefreshing ? 'Refreshing...' : 'Refresh'}
+          <Button variant="outline" size="sm" onClick={() => void stopDirectEngine()} disabled={isStoppingDirectEngine}>
+            {isStoppingDirectEngine ? 'Stopping...' : 'Stop Engine'}
           </Button>
         </>
       );
@@ -74,15 +70,14 @@ export function SetupStatusPanel({
     if (step.id === 'model') {
       return (
         <>
-          {ollamaStatus?.running ? (
-            <Button size="sm" onClick={() => void installRecommendedModel()} disabled={isInstallingRecommendedModel || isDownloadingAnyModel}>
-              {isInstallingRecommendedModel || isDownloadingAnyModel ? 'Installing Model...' : 'Install Recommended Model'}
+          <Button size="sm" onClick={() => setView('settings')}>
+            Choose Model
+          </Button>
+          {settings.directEngineModelPath ? (
+            <Button variant="outline" size="sm" onClick={() => void openConfiguredModel()}>
+              Open GGUF Override
             </Button>
-          ) : (
-            <Button variant="outline" size="sm" onClick={() => void startOllama()} disabled={isStartingOllama}>
-              {isStartingOllama ? 'Starting Ollama...' : 'Start Ollama First'}
-            </Button>
-          )}
+          ) : null}
           <Button variant="outline" size="sm" onClick={() => void runRefresh()} disabled={isRefreshing}>
             {isRefreshing ? 'Refreshing...' : 'Refresh'}
           </Button>
@@ -179,8 +174,6 @@ export function SetupStatusPanel({
           </Button>
         </div>
       ) : null}
-
-      {downloadProgress ? <ModelDownloadProgressCard progress={downloadProgress} className="mt-4" /> : null}
 
       <div className={cn('mt-5 grid gap-5', compact ? 'grid-cols-1' : 'grid-cols-1 xl:grid-cols-2')}>
         <ChecklistGroup

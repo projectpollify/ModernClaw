@@ -10,11 +10,14 @@ export interface AppSettings {
   streamResponses: boolean;
   sendOnEnter: boolean;
   showTokenCount: boolean;
+  showResponseMetrics: boolean;
   saveConversationHistory: boolean;
   enableVoiceOutput: boolean;
   piperVoicePreset: string;
   piperExecutablePath: string;
   piperModelPath: string;
+  directEngineExecutablePath: string;
+  directEngineModelPath: string;
   enableVoiceInput: boolean;
   whisperExecutablePath: string;
   whisperModelPath: string;
@@ -32,17 +35,20 @@ export function normalizeDefaultModel(model: string | null | undefined) {
 export const DEFAULT_SETTINGS: AppSettings = {
   theme: 'system',
   defaultModel: DEFAULT_FLOOR_MODEL,
-  contextWindowSize: 4096,
+  contextWindowSize: 32768,
   memoryPath: '',
   autoSaveConversations: true,
   streamResponses: true,
   sendOnEnter: true,
   showTokenCount: false,
+  showResponseMetrics: true,
   saveConversationHistory: true,
   enableVoiceOutput: false,
   piperVoicePreset: DEFAULT_PIPER_VOICE_ID,
   piperExecutablePath: '',
   piperModelPath: '',
+  directEngineExecutablePath: '',
+  directEngineModelPath: '',
   enableVoiceInput: false,
   whisperExecutablePath: '',
   whisperModelPath: '',

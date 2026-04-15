@@ -1,7 +1,7 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
+import { formatWorkspaceModelName, getCuratedFloorModelByName } from '@/lib/voiceCatalog';
 import { cn } from '@/lib/utils';
-import type { Model } from '@/services/ollama';
-import { useAgentStore } from '@/stores/agentStore';
+import type { Model } from '@/services/engine';
 import { useModelStore } from '@/stores/modelStore';
 import { ModelInfo } from './ModelInfo';
 
@@ -11,15 +11,15 @@ interface ModelCardProps {
 
 export function ModelCard({ model }: ModelCardProps) {
   const currentModel = useModelStore((state) => state.currentModel);
-  const setCurrentModel = useModelStore((state) => state.setCurrentModel);
+  const isSwitching = useModelStore((state) => state.isSwitching);
   const deleteModel = useModelStore((state) => state.deleteModel);
-  const updateActiveAgentDefaultModel = useAgentStore((state) => state.updateActiveAgentDefaultModel);
+  const selectModel = useModelStore((state) => state.selectModel);
   const [showInfo, setShowInfo] = useState(false);
   const isActive = model.name === currentModel;
+  const curatedModel = getCuratedFloorModelByName(model.name);
 
   const handleSelect = async () => {
-    setCurrentModel(model.name);
-    await updateActiveAgentDefaultModel(model.name);
+    await selectModel(model.name);
   };
 
   return (
@@ -33,7 +33,8 @@ export function ModelCard({ model }: ModelCardProps) {
     >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <h3 className="truncate text-base font-semibold">{model.name}</h3>
+          <h3 className="truncate text-base font-semibold">{formatWorkspaceModelName(model.name) || model.name}</h3>
+          {curatedModel ? <p className="mt-1 text-xs text-muted-foreground">{model.name}</p> : null}
           <p className="mt-1 text-sm text-muted-foreground">
             {model.details.parameter_size || 'Unknown size'} -{' '}
             {model.details.quantization_level || 'Unknown quantization'}
@@ -41,14 +42,18 @@ export function ModelCard({ model }: ModelCardProps) {
         </div>
         <span className="shrink-0 text-sm text-muted-foreground">{formatSize(model.size)}</span>
       </div>
+      {model.served ? (
+        <p className="mt-2 text-xs font-medium uppercase tracking-[0.14em] text-green-600">Currently served by Direct Engine</p>
+      ) : null}
 
       <div className="mt-4 flex flex-wrap gap-2">
         {!isActive ? (
           <button
             onClick={() => void handleSelect()}
-            className="rounded-md bg-primary px-3 py-1.5 text-sm text-primary-foreground transition-colors hover:bg-primary/90"
+            disabled={isSwitching}
+            className="rounded-md bg-primary px-3 py-1.5 text-sm text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Use This Model
+            {isSwitching ? 'Switching...' : 'Use This Model'}
           </button>
         ) : (
           <span className="rounded-md px-3 py-1.5 text-sm text-green-600">Active</span>
@@ -61,12 +66,14 @@ export function ModelCard({ model }: ModelCardProps) {
           {showInfo ? 'Hide Info' : 'Info'}
         </button>
 
-        <button
-          onClick={() => void deleteModel(model.name)}
-          className="rounded-md px-3 py-1.5 text-sm text-red-600 transition-colors hover:bg-red-500/10"
-        >
-          Delete
-        </button>
+        {model.path ? (
+          <button
+            onClick={() => void deleteModel(model.name)}
+            className="rounded-md px-3 py-1.5 text-sm text-red-600 transition-colors hover:bg-red-500/10"
+          >
+            Open Location
+          </button>
+        ) : null}
       </div>
 
       {showInfo ? <ModelInfo model={model} /> : null}
@@ -75,6 +82,10 @@ export function ModelCard({ model }: ModelCardProps) {
 }
 
 function formatSize(bytes: number): string {
+  if (!bytes || bytes <= 0) {
+    return 'Managed';
+  }
+
   const gb = bytes / (1024 * 1024 * 1024);
   if (gb >= 1) {
     return `${gb.toFixed(1)}GB`;

@@ -1,26 +1,21 @@
 import { useState } from 'react';
-import { DEFAULT_FLOOR_MODEL } from '@/lib/voiceCatalog';
 import { setupApi } from '@/services/setup';
 import { useMemoryStore } from '@/stores/memoryStore';
 import { useModelStore } from '@/stores/modelStore';
-
-function delay(ms: number) {
-  return new Promise((resolve) => window.setTimeout(resolve, ms));
-}
+import { useSettingsStore } from '@/stores/settingsStore';
 
 type ActionNoticeTone = 'success' | 'info';
 
 export function useSetupActions() {
   const checkStatus = useModelStore((state) => state.checkStatus);
-  const downloadModel = useModelStore((state) => state.downloadModel);
   const loadModels = useModelStore((state) => state.loadModels);
-  const downloadingModel = useModelStore((state) => state.downloadingModel);
   const initializeMemory = useMemoryStore((state) => state.initialize);
   const memoryBasePath = useMemoryStore((state) => state.basePath);
+  const settings = useSettingsStore((state) => state.settings);
 
   const [isOpeningDownload, setIsOpeningDownload] = useState(false);
-  const [isStartingOllama, setIsStartingOllama] = useState(false);
-  const [isInstallingRecommendedModel, setIsInstallingRecommendedModel] = useState(false);
+  const [isStartingDirectEngine, setIsStartingDirectEngine] = useState(false);
+  const [isStoppingDirectEngine, setIsStoppingDirectEngine] = useState(false);
   const [isInitializingWorkspace, setIsInitializingWorkspace] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionNotice, setActionNotice] = useState<{ tone: ActionNoticeTone; message: string } | null>(null);
@@ -30,15 +25,20 @@ export function useSetupActions() {
     setActionNotice(null);
   };
 
-  const openOllamaDownload = async () => {
+  const refreshEngineState = async () => {
+    await checkStatus();
+    await loadModels();
+  };
+
+  const openDirectEngineDownload = async () => {
     setIsOpeningDownload(true);
     resetFeedback();
 
     try {
-      await setupApi.openOllamaDownload();
+      await setupApi.openDirectEngineDownload();
       setActionNotice({
         tone: 'info',
-        message: 'Opened the Ollama download page. Install it there, then come back here and click Start Ollama.',
+        message: 'Opened the llama.cpp releases page. Once llama-server.exe is installed, ModernClaw can usually detect it automatically.',
       });
     } catch (error) {
       setActionError(String(error));
@@ -47,69 +47,64 @@ export function useSetupActions() {
     }
   };
 
-  const startOllama = async () => {
-    setIsStartingOllama(true);
+  const startDirectEngine = async () => {
+    setIsStartingDirectEngine(true);
     resetFeedback();
 
     try {
-      await setupApi.startOllama();
-
-      for (let attempt = 0; attempt < 5; attempt += 1) {
-        await delay(1200);
-        await checkStatus();
-
-        if (useModelStore.getState().ollamaStatus?.running) {
-          setActionNotice({
-            tone: 'success',
-            message: 'Ollama is responding. The next step is installing the recommended model.',
-          });
-          return true;
-        }
-      }
-
-      setActionError('Tried to start Ollama, but it is not responding yet. If this is a fresh install, open Ollama once and then refresh setup.');
-      return false;
-    } catch (error) {
-      setActionError(String(error));
-      return false;
-    } finally {
-      setIsStartingOllama(false);
-    }
-  };
-
-  const installRecommendedModel = async () => {
-    setIsInstallingRecommendedModel(true);
-    resetFeedback();
-
-    try {
-      await downloadModel(DEFAULT_FLOOR_MODEL);
-      await loadModels();
-
-      const { error: modelError, models } = useModelStore.getState();
-      if (modelError) {
-        setActionError(modelError);
-        return false;
-      }
-
-      const confirmed = models.some((model) => model.name === DEFAULT_FLOOR_MODEL);
-      if (!confirmed) {
-        setActionError(
-          `${DEFAULT_FLOOR_MODEL} has not been confirmed in the installed model list yet. ` +
-            'Give Ollama a little more time, then refresh and try again.'
-        );
-        return false;
-      }
-
+      await setupApi.startDirectEngine();
+      await refreshEngineState();
       setActionNotice({
         tone: 'success',
-        message: `${DEFAULT_FLOOR_MODEL} is installed and verified. The next step is making sure the workspace files are ready.`,
+        message: 'Direct Engine is responding on 127.0.0.1:8080. If this was the first Gemma launch, llama.cpp has also cached the selected model locally.',
       });
       return true;
     } catch (error) {
       setActionError(String(error));
       return false;
     } finally {
-      setIsInstallingRecommendedModel(false);
+      setIsStartingDirectEngine(false);
+    }
+  };
+
+  const stopDirectEngine = async () => {
+    setIsStoppingDirectEngine(true);
+    resetFeedback();
+
+    try {
+      await setupApi.stopDirectEngine();
+      await refreshEngineState();
+      setActionNotice({
+        tone: 'info',
+        message: 'Requested a stop for llama-server.exe.',
+      });
+      return true;
+    } catch (error) {
+      setActionError(String(error));
+      return false;
+    } finally {
+      setIsStoppingDirectEngine(false);
+    }
+  };
+
+  const openConfiguredModel = async () => {
+    const target = settings.directEngineModelPath?.trim();
+    if (!target) {
+      setActionError('Set a GGUF model path in Settings before trying to open it.');
+      return false;
+    }
+
+    resetFeedback();
+    try {
+      await setupApi.openExternal(target);
+      setActionNotice({
+        tone: 'info',
+        message: 'Opened the configured GGUF model location.',
+      });
+      return true;
+    } catch (error) {
+      setActionError(String(error));
+      return false;
     }
   };
 
@@ -143,15 +138,15 @@ export function useSetupActions() {
   };
 
   return {
-    openOllamaDownload,
-    startOllama,
-    installRecommendedModel,
+    openDirectEngineDownload,
+    startDirectEngine,
+    stopDirectEngine,
+    openConfiguredModel,
     initializeWorkspace,
     isOpeningDownload,
-    isStartingOllama,
-    isInstallingRecommendedModel,
+    isStartingDirectEngine,
+    isStoppingDirectEngine,
     isInitializingWorkspace,
-    isDownloadingAnyModel: Boolean(downloadingModel),
     actionError,
     actionNotice,
     clearActionError: () => setActionError(null),

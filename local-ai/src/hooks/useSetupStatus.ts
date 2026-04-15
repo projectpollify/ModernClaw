@@ -11,7 +11,7 @@ export function useSetupStatus() {
   const loadSettings = useSettingsStore((state) => state.loadSettings);
 
   const models = useModelStore((state) => state.models);
-  const ollamaStatus = useModelStore((state) => state.ollamaStatus);
+  const engineStatus = useModelStore((state) => state.engineStatus);
   const refreshModels = useModelStore((state) => state.refresh);
   const modelError = useModelStore((state) => state.error);
 
@@ -53,16 +53,16 @@ export function useSetupStatus() {
   };
 
   useEffect(() => {
-    if (!hasLoadedSettings || !ollamaStatus || !memoryBasePath || (!outputStatus && !isCheckingOutput) || (!inputStatus && !isCheckingInput)) {
+    if (!hasLoadedSettings || !engineStatus || !memoryBasePath || (!outputStatus && !isCheckingOutput) || (!inputStatus && !isCheckingInput)) {
       void runRefresh();
     }
   }, [
+    engineStatus,
     hasLoadedSettings,
     inputStatus,
     isCheckingInput,
     isCheckingOutput,
     memoryBasePath,
-    ollamaStatus,
     outputStatus,
   ]);
 
@@ -71,7 +71,7 @@ export function useSetupStatus() {
       buildSetupChecklist({
         settings,
         hasLoadedSettings,
-        ollamaStatus,
+        engineStatus,
         models,
         modelError,
         memoryBasePath,
@@ -87,6 +87,7 @@ export function useSetupStatus() {
         voiceError,
       }),
     [
+      engineStatus,
       hasLoadedSettings,
       inputStatus,
       isCheckingInput,
@@ -97,7 +98,6 @@ export function useSetupStatus() {
       memoryLoading,
       modelError,
       models,
-      ollamaStatus,
       outputStatus,
       settings,
       soul,

@@ -1,3 +1,5 @@
+import { ThinkingPulse } from './ThinkingPulse';
+
 export function TypingIndicator() {
   return (
     <div className="flex gap-3">
@@ -6,10 +8,12 @@ export function TypingIndicator() {
       </div>
 
       <div className="rounded-2xl rounded-tl-sm bg-secondary px-4 py-3">
-        <div className="flex gap-1">
-          <span className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.3s]" />
-          <span className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.15s]" />
-          <span className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground" />
+        <div className="flex items-center gap-3">
+          <ThinkingPulse />
+          <div>
+            <p className="text-sm font-medium text-secondary-foreground/90">Thinking</p>
+            <p className="text-xs text-secondary-foreground/60">Preparing a response.</p>
+          </div>
         </div>
       </div>
     </div>

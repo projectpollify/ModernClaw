@@ -18,6 +18,7 @@ pub struct MessageDto {
     pub attachments: Vec<MessageAttachment>,
     pub tokens_used: Option<i32>,
     pub feedback: Option<String>,
+    pub feedback_note: Option<String>,
     pub created_at: DateTime<Utc>,
 }
 
@@ -31,6 +32,7 @@ impl From<MessageDto> for Message {
             attachments: value.attachments,
             tokens_used: value.tokens_used,
             feedback: value.feedback,
+            feedback_note: value.feedback_note,
             created_at: value.created_at,
         }
     }
@@ -46,6 +48,7 @@ impl From<Message> for MessageDto {
             attachments: value.attachments,
             tokens_used: value.tokens_used,
             feedback: value.feedback,
+            feedback_note: value.feedback_note,
             created_at: value.created_at,
         }
     }
@@ -192,6 +195,7 @@ pub async fn message_set_feedback(
     state: State<'_, DatabaseState>,
     messageId: String,
     feedback: Option<String>,
+    feedbackNote: Option<String>,
 ) -> Result<(), String> {
     if let Some(value) = feedback.as_deref() {
         if value != "up" && value != "down" {
@@ -199,8 +203,17 @@ pub async fn message_set_feedback(
         }
     }
 
+    let normalized_note = feedbackNote
+        .map(|value| value.trim().to_string())
+        .filter(|value| !value.is_empty());
+    let normalized_note = if feedback.as_deref() == Some("down") {
+        normalized_note
+    } else {
+        None
+    };
+
     let repo = MessageRepository::new(&state.db);
-    repo.update_feedback(&messageId, feedback.as_deref())
+    repo.update_feedback(&messageId, feedback.as_deref(), normalized_note.as_deref())
 }
 
 #[tauri::command]

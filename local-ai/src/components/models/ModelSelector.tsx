@@ -1,17 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
+import { formatWorkspaceModelName, getCuratedFloorModelByName } from '@/lib/voiceCatalog';
 import { cn } from '@/lib/utils';
-import { useAgentStore } from '@/stores/agentStore';
 import { useModelStore } from '@/stores/modelStore';
 
 export function ModelSelector() {
   const models = useModelStore((state) => state.models);
   const currentModel = useModelStore((state) => state.currentModel);
-  const ollamaStatus = useModelStore((state) => state.ollamaStatus);
+  const engineStatus = useModelStore((state) => state.engineStatus);
   const checkStatus = useModelStore((state) => state.checkStatus);
-  const setCurrentModel = useModelStore((state) => state.setCurrentModel);
-  const updateActiveAgentDefaultModel = useAgentStore((state) => state.updateActiveAgentDefaultModel);
+  const isSwitching = useModelStore((state) => state.isSwitching);
+  const selectModel = useModelStore((state) => state.selectModel);
   const [isOpen, setIsOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const servedModel = models.find((model) => model.served);
 
   useEffect(() => {
     void checkStatus();
@@ -29,23 +30,20 @@ export function ModelSelector() {
   }, []);
 
   const handleSelectModel = async (modelName: string) => {
-    setCurrentModel(modelName);
     setIsOpen(false);
-
-    try {
-      await updateActiveAgentDefaultModel(modelName);
-    } catch {
+    const didSwitch = await selectModel(modelName);
+    if (!didSwitch) {
       void checkStatus();
     }
   };
 
-  if (!ollamaStatus?.running) {
+  if (!engineStatus?.running) {
     return (
       <button
         onClick={() => void checkStatus()}
         className="rounded-full border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-600 transition-colors hover:bg-red-500/15"
       >
-        Ollama Offline
+        Direct Engine Offline
       </button>
     );
   }
@@ -54,24 +52,28 @@ export function ModelSelector() {
     <div ref={ref} className="relative">
       <button
         onClick={() => setIsOpen((value) => !value)}
+        disabled={isSwitching}
         className={cn(
-          'inline-flex h-9 items-center gap-2 rounded-full border border-border bg-secondary/70 px-4 text-sm transition-colors',
+          'inline-flex h-9 items-center gap-2 rounded-full border border-border bg-secondary/70 px-4 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-60',
           'hover:bg-accent hover:text-accent-foreground'
         )}
       >
         <span className="h-2 w-2 rounded-full bg-green-500" />
-        <span className="max-w-44 truncate">{currentModel || 'Select Model'}</span>
+        <span className="max-w-44 truncate">
+          {isSwitching ? 'Switching model...' : formatWorkspaceModelName(currentModel) || 'Select Model'}
+        </span>
         <ChevronIcon className={cn('h-4 w-4 transition-transform', isOpen && 'rotate-180')} />
       </button>
 
       {isOpen ? (
         <div className="absolute left-1/2 top-full z-50 mt-2 w-72 -translate-x-1/2 overflow-hidden rounded-2xl border border-border bg-background shadow-xl">
           <div className="border-b border-border px-4 py-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              Installed Models
-            </p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Installed Models</p>
             <p className="mt-1 text-xs text-muted-foreground">
               Choosing a model here saves it as the default for this workspace.
+            </p>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Served now: {formatWorkspaceModelName(servedModel?.name) || 'Unknown'}
             </p>
           </div>
 
@@ -81,13 +83,20 @@ export function ModelSelector() {
                 <button
                   key={model.name}
                   onClick={() => void handleSelectModel(model.name)}
+                  disabled={isSwitching}
                   className={cn(
-                    'flex w-full items-center gap-3 px-4 py-3 text-left text-sm transition-colors',
+                    'flex w-full items-center gap-3 px-4 py-3 text-left text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-60',
                     'hover:bg-accent hover:text-accent-foreground',
                     model.name === currentModel && 'bg-accent text-accent-foreground'
                   )}
                 >
-                  <span className="flex-1 truncate">{model.name}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate">{formatWorkspaceModelName(model.name) || model.name}</span>
+                    {getCuratedFloorModelByName(model.name) ? (
+                      <span className="block truncate text-xs text-muted-foreground">{model.name}</span>
+                    ) : null}
+                  </span>
+                  {model.served ? <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-green-600">Live</span> : null}
                   <span className="text-xs text-muted-foreground">{formatSize(model.size)}</span>
                 </button>
               ))
@@ -104,6 +113,10 @@ export function ModelSelector() {
 }
 
 function formatSize(bytes: number): string {
+  if (!bytes || bytes <= 0) {
+    return 'Ready';
+  }
+
   const gb = bytes / (1024 * 1024 * 1024);
   if (gb >= 1) {
     return `${gb.toFixed(1)}GB`;

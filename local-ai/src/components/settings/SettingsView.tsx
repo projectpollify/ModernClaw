@@ -3,7 +3,12 @@ import { Button } from '@/components/ui/Button';
 import { ModelCard } from '@/components/models/ModelCard';
 import { ModelDownloader } from '@/components/models/ModelDownloader';
 import { SetupStatusPanel } from '@/components/setup/SetupStatusPanel';
-import { CURATED_FLOOR_MODELS, CURATED_PIPER_VOICES, DEFAULT_FLOOR_MODEL } from '@/lib/voiceCatalog';
+import {
+  CURATED_FLOOR_MODELS,
+  CURATED_PIPER_VOICES,
+  DEFAULT_FLOOR_MODEL,
+  formatWorkspaceModelName,
+} from '@/lib/voiceCatalog';
 import { getEffectiveVoiceSettings } from '@/lib/voiceSettings';
 import { getDefaultVoicePaths } from '@/lib/voicePaths';
 import { cn } from '@/lib/utils';
@@ -40,7 +45,9 @@ export function SettingsView() {
   const models = useModelStore((state) => state.models);
   const currentModel = useModelStore((state) => state.currentModel);
   const setCurrentModel = useModelStore((state) => state.setCurrentModel);
-  const ollamaStatus = useModelStore((state) => state.ollamaStatus);
+  const isSwitchingModel = useModelStore((state) => state.isSwitching);
+  const selectModel = useModelStore((state) => state.selectModel);
+  const engineStatus = useModelStore((state) => state.engineStatus);
   const refreshModels = useModelStore((state) => state.refresh);
   const loadConversations = useConversationStore((state) => state.loadConversations);
   const clearConversations = useConversationStore((state) => state.clearConversations);
@@ -76,10 +83,10 @@ export function SettingsView() {
   };
 
   useEffect(() => {
-    if (!ollamaStatus) {
+    if (!engineStatus) {
       void refreshModels();
     }
-  }, [ollamaStatus, refreshModels]);
+  }, [engineStatus, refreshModels]);
 
   useEffect(() => {
     void loadFeedbackSummary();
@@ -130,12 +137,12 @@ export function SettingsView() {
     const preferred = CURATED_FLOOR_MODELS.map((model) => ({
       name: model.name,
       label: installedNames.has(model.name)
-        ? `${model.name} (${model.recommended ? 'primary lane' : 'lighter lane'}, installed)`
-        : `${model.name} (${model.recommended ? 'primary lane' : 'lighter lane'})`,
+        ? `${model.label} (${model.laneLabel.toLowerCase()}, installed)`
+        : `${model.label} (${model.laneLabel.toLowerCase()})`,
     }));
     const seen = new Set<string>();
 
-    return [...preferred, ...models.map((model) => ({ name: model.name, label: model.name }))].filter((option) => {
+    return [...preferred, ...models.map((model) => ({ name: model.name, label: formatWorkspaceModelName(model.name) || model.name }))].filter((option) => {
       if (seen.has(option.name)) {
         return false;
       }
@@ -165,14 +172,12 @@ export function SettingsView() {
   };
 
   const handleWorkspaceModelChange = async (value: string) => {
-    const previousModel = currentModel;
     const nextModel = value || null;
-    setCurrentModel(nextModel);
-    try {
-      await updateActiveAgentDefaultModel(nextModel);
-    } catch {
-      setCurrentModel(previousModel);
+    if (!nextModel) {
+      return;
     }
+
+    await selectModel(nextModel);
   };
 
   const handleHistoryToggle = async (value: boolean) => {
@@ -267,11 +272,12 @@ export function SettingsView() {
             <SettingsSection title="Model">
               <SettingRow
                 label="Workspace Model"
-                description="Choose the default model for this workspace. The header model picker and the model tools below update the same saved preference."
+                description="Choose the default Gemma 4 lane for this workspace. ModernClaw can pull the supported 4B and 2B variants directly through llama.cpp on first start."
               >
                 <select
                   value={activeAgent?.defaultModel ?? currentModel ?? ''}
                   onChange={(event) => void handleWorkspaceModelChange(event.target.value)}
+                  disabled={isSwitchingModel}
                   className="max-w-[320px] rounded-xl border border-border bg-background px-3 py-2 text-sm"
                 >
                   {modelOptions.map((option) => (
@@ -281,6 +287,54 @@ export function SettingsView() {
                   ))}
                 </select>
               </SettingRow>
+
+              <SettingRow
+                label="Engine Status"
+                description="Shows whether llama-server is responding on the local port. ModernClaw auto-detects the installed executable when it can."
+                stackOnMobile
+              >
+                <div className="flex flex-wrap items-center justify-end gap-2">
+                  <span className="rounded-full bg-secondary px-3 py-1 text-xs text-secondary-foreground">
+                    {engineStatus?.running ? 'Running' : 'Offline'}
+                  </span>
+                  <Button variant="outline" size="sm" onClick={() => void refreshModels()}>
+                    Refresh Engine
+                  </Button>
+                </div>
+              </SettingRow>
+
+              <details className="rounded-2xl border border-border bg-background/60 p-4">
+                <summary className="cursor-pointer text-sm font-medium">Advanced Engine Overrides</summary>
+                <div className="mt-4 space-y-4">
+                  <SettingRow
+                    label="Executable Override"
+                    description="Only use this if auto-detection misses your llama-server.exe install."
+                    stackOnMobile
+                  >
+                    <input
+                      type="text"
+                      value={settings.directEngineExecutablePath}
+                      onChange={(event) => void updateSetting('directEngineExecutablePath', event.target.value)}
+                      placeholder={engineStatus?.executablePath || "%LOCALAPPDATA%\\ModernClaw\\tools\\llama.cpp\\llama-server.exe"}
+                      className="w-full min-w-[260px] rounded-xl border border-border bg-background px-3 py-2 text-sm"
+                    />
+                  </SettingRow>
+
+                  <SettingRow
+                    label="GGUF Override"
+                    description="Optional local GGUF file path. Leave this blank to use the selected Gemma 4 workspace model instead."
+                    stackOnMobile
+                  >
+                    <input
+                      type="text"
+                      value={settings.directEngineModelPath}
+                      onChange={(event) => void updateSetting('directEngineModelPath', event.target.value)}
+                      placeholder={engineStatus?.modelPath || "%LOCALAPPDATA%\\ModernClaw\\models\\google-gemma-4-e4b.gguf"}
+                      className="w-full min-w-[260px] rounded-xl border border-border bg-background px-3 py-2 text-sm"
+                    />
+                  </SettingRow>
+                </div>
+              </details>
 
               <SettingRow
                 label="Context Window"
@@ -328,6 +382,16 @@ export function SettingsView() {
                 <Toggle
                   checked={settings.showTokenCount}
                   onChange={(value) => void updateSetting('showTokenCount', value)}
+                />
+              </SettingRow>
+
+              <SettingRow
+                label="Show Response Metrics"
+                description="Display context usage, tokens per second, output tokens, duration, and stop reason beneath assistant replies."
+              >
+                <Toggle
+                  checked={settings.showResponseMetrics}
+                  onChange={(value) => void updateSetting('showResponseMetrics', value)}
                 />
               </SettingRow>
             </SettingsSection>
@@ -553,27 +617,27 @@ export function SettingsView() {
             />
 
             <section className="rounded-[30px] border border-border bg-background/75 p-5 shadow-sm">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <h2 className="text-lg font-semibold tracking-tight">Model Management</h2>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Use the header model picker or the model cards below to save the current model for this workspace.
-                  </p>
-                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <h2 className="text-lg font-semibold tracking-tight">Model Management</h2>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Use the workspace model selector above for the normal Gemma 4 lanes. The cards below are mostly for visibility and advanced override troubleshooting.
+                    </p>
+                  </div>
                 <span className="rounded-full bg-secondary px-3 py-1 text-xs text-secondary-foreground">
-                  Active: {currentModel ?? 'None'}
+                  Active: {formatWorkspaceModelName(currentModel) || 'None'}
                 </span>
               </div>
 
-              {!ollamaStatus?.running ? (
+              {!engineStatus?.running ? (
                 <div className="mt-4 rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-4 text-sm text-yellow-700">
-                  Ollama is not running. Start it to manage installed models.
+                  Direct Engine is not running. Start llama-server to verify served models.
                 </div>
               ) : null}
 
               <div className="mt-5 rounded-2xl border border-border bg-background/80 p-4">
                 <h3 className="mb-3 text-sm font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                  Download
+                  Direct Engine
                 </h3>
                 <ModelDownloader />
               </div>
@@ -583,7 +647,7 @@ export function SettingsView() {
                   models.map((model) => <ModelCard key={model.name} model={model} />)
                 ) : (
                   <div className="rounded-2xl border border-dashed border-border bg-background/70 p-5 text-sm text-muted-foreground">
-                    No models installed yet.
+                    No models discovered yet.
                   </div>
                 )}
               </div>

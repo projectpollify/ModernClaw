@@ -1,7 +1,9 @@
 import { convertFileSrc } from '@tauri-apps/api/core';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 import { MessageContent } from './MessageContent';
+import { MessageMetricsRow } from './MessageMetricsRow';
 import type { Message } from '@/types';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useChatStore } from '@/stores/chatStore';
@@ -15,10 +17,50 @@ export function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.role === 'user';
   const isAssistant = message.role === 'assistant';
   const setMessageFeedback = useChatStore((state) => state.setMessageFeedback);
-  const { showTokenCount, enableVoiceOutput } = useSettingsStore((state) => state.settings);
+  const { showTokenCount, showResponseMetrics, enableVoiceOutput } = useSettingsStore((state) => state.settings);
   const { speakMessage, isSpeaking, isPaused, speakingMessageId } = useVoiceStore();
   const tokenCount = estimateTokens(message.content);
+  const messageMetrics =
+    message.metrics ??
+    (message.tokensUsed
+      ? {
+          outputTokens: message.tokensUsed,
+        }
+      : undefined);
   const isActiveMessage = speakingMessageId === message.id;
+  const [isFeedbackNoteOpen, setIsFeedbackNoteOpen] = useState(message.feedback === 'down');
+  const [feedbackDraft, setFeedbackDraft] = useState(message.feedbackNote ?? '');
+
+  useEffect(() => {
+    setFeedbackDraft(message.feedbackNote ?? '');
+    setIsFeedbackNoteOpen(
+      message.feedback === 'down' && Boolean((message.feedbackNote ?? '').trim()) ? true : message.feedback === 'down'
+    );
+  }, [message.feedback, message.feedbackNote]);
+
+  const handleHelpfulClick = () => {
+    const nextFeedback = message.feedback === 'up' ? undefined : 'up';
+    setIsFeedbackNoteOpen(false);
+    setFeedbackDraft('');
+    void setMessageFeedback(message.id, nextFeedback);
+  };
+
+  const handleNotUsefulClick = () => {
+    if (message.feedback === 'down') {
+      setIsFeedbackNoteOpen(false);
+      setFeedbackDraft('');
+      void setMessageFeedback(message.id, undefined);
+      return;
+    }
+
+    setIsFeedbackNoteOpen(true);
+    void setMessageFeedback(message.id, 'down', message.feedbackNote);
+  };
+
+  const submitFeedbackNote = () => {
+    void setMessageFeedback(message.id, 'down', feedbackDraft.trim());
+    setIsFeedbackNoteOpen(false);
+  };
 
   return (
     <div className={cn('flex gap-3', isUser ? 'flex-row-reverse' : 'flex-row')}>
@@ -75,6 +117,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
           </div>
         ) : null}
         <MessageContent content={message.content} />
+        {isAssistant && showResponseMetrics ? <MessageMetricsRow metrics={messageMetrics} /> : null}
         <div
           className={cn(
             'mt-2 flex items-center gap-2 text-xs opacity-60',
@@ -91,7 +134,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
                 type="button"
                 aria-label="Mark response helpful"
                 title="Helpful"
-                onClick={() => void setMessageFeedback(message.id, message.feedback === 'up' ? undefined : 'up')}
+                onClick={handleHelpfulClick}
                 className={cn(
                   'rounded-md px-1.5 py-1 transition-colors',
                   message.feedback === 'up'
@@ -105,7 +148,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
                 type="button"
                 aria-label="Mark response not useful"
                 title="Not useful"
-                onClick={() => void setMessageFeedback(message.id, message.feedback === 'down' ? undefined : 'down')}
+                onClick={handleNotUsefulClick}
                 className={cn(
                   'rounded-md px-1.5 py-1 transition-colors',
                   message.feedback === 'down'
@@ -134,6 +177,47 @@ export function MessageBubble({ message }: MessageBubbleProps) {
             </Button>
           ) : null}
         </div>
+        {isAssistant && message.feedback === 'down' && isFeedbackNoteOpen ? (
+          <div className="mt-3 rounded-2xl border border-border/80 bg-background/55 p-3 text-foreground">
+            <label className="block text-xs font-medium text-muted-foreground" htmlFor={`feedback-note-${message.id}`}>
+              What was wrong?
+            </label>
+            <textarea
+              id={`feedback-note-${message.id}`}
+              value={feedbackDraft}
+              onChange={(event) => setFeedbackDraft(event.target.value.slice(0, 240))}
+              placeholder="Too vague, wrong tone, bad format, missed the point..."
+              className="mt-2 min-h-[78px] w-full resize-none rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+            />
+            <div className="mt-2 flex items-center justify-between gap-3 text-xs text-muted-foreground">
+              <span>{240 - feedbackDraft.length} left</span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  className="rounded-md px-2.5 py-1 hover:bg-background/80"
+                  onClick={() => {
+                    setFeedbackDraft(message.feedbackNote ?? '');
+                    setIsFeedbackNoteOpen(false);
+                  }}
+                >
+                  Skip
+                </button>
+                <button
+                  type="button"
+                  className="rounded-md bg-primary px-2.5 py-1 font-medium text-primary-foreground hover:opacity-95"
+                  onClick={submitFeedbackNote}
+                >
+                  Save note
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
+        {isAssistant && message.feedback === 'down' && !isFeedbackNoteOpen && message.feedbackNote ? (
+          <div className="mt-3 rounded-2xl border border-border/70 bg-background/45 px-3 py-2 text-xs text-muted-foreground">
+            <span className="font-medium text-foreground/85">Feedback note:</span> {message.feedbackNote}
+          </div>
+        ) : null}
       </div>
     </div>
   );

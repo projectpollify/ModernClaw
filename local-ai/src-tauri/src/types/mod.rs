@@ -9,6 +9,12 @@ pub struct Model {
     pub digest: String,
     #[serde(default)]
     pub details: ModelDetails,
+    #[serde(default)]
+    pub path: Option<String>,
+    #[serde(default = "default_model_source")]
+    pub source: String,
+    #[serde(default)]
+    pub served: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -19,35 +25,12 @@ pub struct ModelDetails {
     pub quantization_level: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ModelsResponse {
-    pub models: Vec<Model>,
-}
-
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ChatMessage {
     pub role: String,
     pub content: String,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub images: Vec<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ChatRequest {
-    pub model: String,
-    pub messages: Vec<ChatMessage>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub stream: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub options: Option<ChatOptions>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ChatOptions {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub temperature: Option<f32>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub num_ctx: Option<u32>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -60,28 +43,30 @@ pub struct ChatResponse {
     pub total_duration: Option<u64>,
     #[serde(default)]
     pub eval_count: Option<u32>,
+    #[serde(default)]
+    pub prompt_eval_count: Option<u32>,
+    #[serde(default)]
+    pub finish_reason: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct OllamaStatus {
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct DirectEngineStatus {
     pub running: bool,
-    pub version: Option<String>,
+    pub base_url: String,
+    pub executable_path: Option<String>,
+    pub executable_found: bool,
+    pub model_path: Option<String>,
+    pub model_found: bool,
     pub error: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct OllamaPullProgress {
-    #[serde(default)]
-    pub model: String,
-    pub status: String,
-    #[serde(default)]
-    pub digest: Option<String>,
-    #[serde(default)]
-    pub total: Option<u64>,
-    #[serde(default)]
-    pub completed: Option<u64>,
-    #[serde(default)]
-    pub done: bool,
+pub struct DirectEngineSettings {
+    pub executable_path: Option<String>,
+    pub model_path: Option<String>,
+    pub default_model: Option<String>,
+    pub context_window_size: Option<usize>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -124,6 +109,7 @@ pub struct Message {
     pub attachments: Vec<MessageAttachment>,
     pub tokens_used: Option<i32>,
     pub feedback: Option<String>,
+    pub feedback_note: Option<String>,
     pub created_at: DateTime<Utc>,
 }
 
@@ -207,6 +193,10 @@ pub struct ContextStats {
 pub struct BuildContextResponse {
     pub messages: Vec<ChatMessage>,
     pub stats: ContextStats,
+}
+
+fn default_model_source() -> String {
+    "local".to_string()
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

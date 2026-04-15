@@ -3,19 +3,19 @@ import { Button } from '@/components/ui/Button';
 import { useSetupActions } from '@/hooks/useSetupActions';
 import { useModelStore } from '@/stores/modelStore';
 
-interface OllamaStepProps {
+interface DirectEngineStepProps {
   onNext: () => void;
   onBack: () => void;
 }
 
-export function OllamaStep({ onNext, onBack }: OllamaStepProps) {
-  const ollamaStatus = useModelStore((state) => state.ollamaStatus);
+export function DirectEngineStep({ onNext, onBack }: DirectEngineStepProps) {
+  const engineStatus = useModelStore((state) => state.engineStatus);
   const checkStatus = useModelStore((state) => state.checkStatus);
   const {
-    openOllamaDownload,
-    startOllama,
+    openDirectEngineDownload,
+    startDirectEngine,
     isOpeningDownload,
-    isStartingOllama,
+    isStartingDirectEngine,
     actionError,
     actionNotice,
     clearActionError,
@@ -36,13 +36,13 @@ export function OllamaStep({ onNext, onBack }: OllamaStepProps) {
     void runCheck();
   }, []);
 
-  const isRunning = ollamaStatus?.running ?? false;
+  const isRunning = engineStatus?.running ?? false;
 
   return (
     <StepShell
       eyebrow="Step 1"
-      title="Check Ollama"
-      description="ModernClaw talks to Ollama on your machine to run the model layer."
+      title="Check Direct Engine"
+      description="ModernClaw now talks directly to llama-server on your machine through the local direct engine."
       backLabel="Back"
       nextLabel={isRunning ? 'Continue to Model' : 'Continue'}
       onBack={onBack}
@@ -50,49 +50,34 @@ export function OllamaStep({ onNext, onBack }: OllamaStepProps) {
       nextDisabled={!isRunning}
     >
       {isChecking ? (
-        <StatusCard tone="neutral" title="Checking for Ollama..." description="Looking for a running Ollama instance on localhost:11434." />
+        <StatusCard tone="neutral" title="Checking Direct Engine..." description="Looking for llama-server on http://127.0.0.1:8080." />
       ) : isRunning ? (
         <StatusCard
           tone="success"
-          title="Ollama is running"
-          description={
-            ollamaStatus?.version
-              ? `Version detected: ${ollamaStatus.version}. The next step is installing the recommended model.`
-              : 'You are ready to install the recommended model next.'
-          }
+          title="Direct Engine is running"
+          description="The next step is confirming the GGUF model path and discovered model alias."
         />
       ) : (
         <StatusCard
           tone="warning"
-          title="Ollama not detected"
-          description="Install and start Ollama, then check again. ModernClaw depends on it for model execution."
+          title="Direct Engine not detected"
+          description="Install llama.cpp if needed, configure llama-server.exe and a GGUF model path, then start the engine."
         >
           <div className="mt-5 rounded-2xl bg-background/60 p-4 text-left text-sm leading-7 text-muted-foreground">
             <ol className="list-decimal space-y-1 pl-5">
-              <li>
-                Install Ollama from{' '}
-                <a
-                  href="https://ollama.com"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-primary underline-offset-4 hover:underline"
-                >
-                  ollama.com
-                </a>
-                .
-              </li>
-              <li>Start Ollama on this machine.</li>
-              <li>Come back and click Check Again.</li>
+              <li>Install or unpack llama.cpp with <code>llama-server.exe</code>.</li>
+              <li>Set the executable path and GGUF path in Settings.</li>
+              <li>Come back and click Start Direct Engine.</li>
             </ol>
           </div>
 
           <div className="mt-6">
             <div className="flex flex-wrap justify-center gap-3">
-              <Button variant="outline" onClick={() => void openOllamaDownload()} disabled={isOpeningDownload}>
-                {isOpeningDownload ? 'Opening Download...' : 'Download Ollama'}
+              <Button variant="outline" onClick={() => void openDirectEngineDownload()} disabled={isOpeningDownload}>
+                {isOpeningDownload ? 'Opening Download...' : 'Get llama.cpp'}
               </Button>
-              <Button variant="outline" onClick={() => void startOllama()} disabled={isStartingOllama}>
-                {isStartingOllama ? 'Starting Ollama...' : 'Start Ollama'}
+              <Button variant="outline" onClick={() => void startDirectEngine()} disabled={isStartingDirectEngine}>
+                {isStartingDirectEngine ? 'Starting Direct Engine...' : 'Start Direct Engine'}
               </Button>
               <Button variant="outline" onClick={() => void runCheck()}>
                 Check Again
@@ -199,5 +184,3 @@ function StatusCard({
     </div>
   );
 }
-
-

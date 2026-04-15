@@ -1,10 +1,11 @@
+import { DEFAULT_FLOOR_MODEL, formatWorkspaceModelName, LIGHTWEIGHT_FLOOR_MODEL } from '@/lib/voiceCatalog';
+import type { DirectEngineStatus, Model } from '@/services/engine';
 import type { MemoryFile } from '@/services/memory';
-import type { Model, OllamaStatus } from '@/services/ollama';
 import type { AppSettings } from '@/types/settings';
 import type { VoiceInputStatus, VoiceOutputStatus } from '@/types/voice';
 
 export type SetupItemState = 'ready' | 'attention' | 'checking' | 'optional';
-export type SetupNextStepId = 'checking' | 'ollama' | 'model' | 'memory' | 'ready';
+export type SetupNextStepId = 'checking' | 'engine' | 'model' | 'memory' | 'ready';
 
 export interface SetupChecklistItem {
   id: string;
@@ -31,7 +32,7 @@ export interface SetupNextStep {
 interface BuildSetupChecklistArgs {
   settings: AppSettings;
   hasLoadedSettings: boolean;
-  ollamaStatus: OllamaStatus | null;
+  engineStatus: DirectEngineStatus | null;
   models: Model[];
   modelError: string | null;
   memoryBasePath: string | null;
@@ -50,7 +51,7 @@ interface BuildSetupChecklistArgs {
 export function buildSetupChecklist({
   settings,
   hasLoadedSettings,
-  ollamaStatus,
+  engineStatus,
   models,
   modelError,
   memoryBasePath,
@@ -64,12 +65,7 @@ export function buildSetupChecklist({
   isCheckingOutput,
   isCheckingInput,
   voiceError,
-}: BuildSetupChecklistArgs): {
-  requiredItems: SetupChecklistItem[];
-  optionalItems: SetupChecklistItem[];
-  summary: SetupChecklistSummary;
-  nextStep: SetupNextStep;
-} {
+}: BuildSetupChecklistArgs) {
   const missingFiles = [
     !soul?.exists ? 'SOUL.md' : null,
     !user?.exists ? 'USER.md' : null,
@@ -77,8 +73,8 @@ export function buildSetupChecklist({
   ].filter((value): value is string => Boolean(value));
 
   const requiredItems: SetupChecklistItem[] = [
-    buildOllamaItem(ollamaStatus, modelError),
-    buildModelItem(ollamaStatus, models, modelError),
+    buildEngineItem(engineStatus),
+    buildModelItem(engineStatus, settings, models, modelError),
     buildMemoryItem(memoryBasePath, missingFiles, memoryLoading, memoryError),
   ];
 
@@ -94,59 +90,79 @@ export function buildSetupChecklist({
     optionalTotal: optionalItems.length,
   };
 
-  const nextStep = buildNextStep({
-    ollamaStatus,
-    models,
-    memoryBasePath,
-    missingFiles,
-    memoryLoading,
-    summary,
-  });
-
   return {
     requiredItems,
     optionalItems,
     summary,
-    nextStep,
+    nextStep: buildNextStep({
+      settings,
+      engineStatus,
+      models,
+      memoryBasePath,
+      missingFiles,
+      memoryLoading,
+      summary,
+    }),
   };
 }
 
+function hasManagedGemmaSelection(settings: AppSettings) {
+  return [DEFAULT_FLOOR_MODEL, LIGHTWEIGHT_FLOOR_MODEL].includes(settings.defaultModel ?? '');
+}
+
+function selectedManagedGemmaLabel(settings: AppSettings) {
+  if (settings.defaultModel === DEFAULT_FLOOR_MODEL) {
+    return 'Gemma 4 E4B';
+  }
+
+  if (settings.defaultModel === LIGHTWEIGHT_FLOOR_MODEL) {
+    return 'Gemma 4 E2B';
+  }
+
+  return null;
+}
+
 function buildNextStep({
-  ollamaStatus,
+  settings,
+  engineStatus,
   models,
   memoryBasePath,
   missingFiles,
   memoryLoading,
   summary,
 }: {
-  ollamaStatus: OllamaStatus | null;
+  settings: AppSettings;
+  engineStatus: DirectEngineStatus | null;
   models: Model[];
   memoryBasePath: string | null;
   missingFiles: string[];
   memoryLoading: boolean;
   summary: SetupChecklistSummary;
 }): SetupNextStep {
-  if (!ollamaStatus || (memoryLoading && !memoryBasePath)) {
+  const resolvedModelPath = settings.directEngineModelPath || engineStatus?.modelPath || '';
+  const hasManagedModel = hasManagedGemmaSelection(settings);
+
+  if (!engineStatus || (memoryLoading && !memoryBasePath)) {
     return {
       id: 'checking',
       title: 'Checking this machine',
-      detail: 'ModernClaw is still confirming local services and workspace files.',
+      detail: 'ModernClaw is confirming the direct engine, configured model, and workspace files.',
     };
   }
 
-  if (!ollamaStatus.running) {
+  if (!engineStatus.executableFound || !engineStatus.running) {
     return {
-      id: 'ollama',
-      title: 'Get Ollama running first',
-      detail: 'Install Ollama if needed, then start it so ModernClaw can reach the local model service.',
+      id: 'engine',
+      title: 'Configure and start Direct Engine',
+      detail: 'ModernClaw auto-detects llama-server.exe on this machine. Start the engine to bring chat online on 127.0.0.1:8080.',
     };
   }
 
-  if (models.length === 0) {
+  if ((!resolvedModelPath || !engineStatus.modelFound) && !hasManagedModel && models.length === 0) {
     return {
       id: 'model',
-      title: 'Install the recommended model',
-      detail: 'Once Ollama is up, download a supported Gemma 4 model so chat is ready right away.',
+      title: 'Choose a Gemma 4 model',
+      detail: 'Pick the 4B or 2B Gemma 4 lane. A manual GGUF path is only needed for advanced overrides.',
     };
   }
 
@@ -154,7 +170,7 @@ function buildNextStep({
     return {
       id: 'memory',
       title: 'Initialize the workspace files',
-      detail: 'Create SOUL.md, USER.md, and MEMORY.md so the base workspace is ready for first use.',
+      detail: 'Create SOUL.md, USER.md, and MEMORY.md so the workspace prompt files are ready.',
     };
   }
 
@@ -162,84 +178,115 @@ function buildNextStep({
     return {
       id: 'ready',
       title: 'Core setup is ready',
-      detail: 'You can start chatting now. Voice features can wait until later if you want to keep setup simple.',
+      detail: 'The direct engine is up, a model is configured, and the workspace files are in place.',
     };
   }
 
   return {
     id: 'checking',
     title: 'Refreshing setup state',
-    detail: 'ModernClaw is reconciling the current machine state.',
+    detail: 'ModernClaw is reconciling the latest machine state.',
   };
 }
 
-function buildOllamaItem(ollamaStatus: OllamaStatus | null, modelError: string | null): SetupChecklistItem {
-  if (!ollamaStatus) {
+function buildEngineItem(engineStatus: DirectEngineStatus | null): SetupChecklistItem {
+  if (!engineStatus) {
     return {
-      id: 'ollama',
-      label: 'Ollama',
-      detail: 'Checking whether Ollama is available on this machine.',
+      id: 'engine',
+      label: 'Direct Engine',
+      detail: 'Checking whether llama-server is reachable on this machine.',
       state: 'checking',
     };
   }
 
-  if (ollamaStatus.running) {
+  if (engineStatus.running) {
     return {
-      id: 'ollama',
-      label: 'Ollama',
-      detail: ollamaStatus.version
-        ? `Running and ready. Detected version ${ollamaStatus.version}.`
-        : 'Running and ready for local model requests.',
+      id: 'engine',
+      label: 'Direct Engine',
+      detail: `Running and ready at ${engineStatus.baseUrl}.`,
       state: 'ready',
+      notes: [engineStatus.executablePath ? `Executable: ${engineStatus.executablePath}` : 'Executable path not configured.'],
     };
+  }
+
+  const notes = [];
+  if (!engineStatus.executableFound) {
+    notes.push('Install llama.cpp so ModernClaw can launch llama-server.exe on this machine.');
+  } else if (engineStatus.executablePath) {
+    notes.push(`Detected executable: ${engineStatus.executablePath}`);
+  }
+
+  if (engineStatus.error) {
+    notes.push(engineStatus.error);
   }
 
   return {
-    id: 'ollama',
-    label: 'Ollama',
-    detail: 'ModernClaw needs Ollama running locally before chat can work.',
+    id: 'engine',
+    label: 'Direct Engine',
+    detail: 'ModernClaw needs llama-server running locally before chat can work.',
     state: 'attention',
-    notes: [ollamaStatus.error ?? modelError ?? 'Install and start Ollama, then refresh setup checks.'],
+    notes,
   };
 }
 
-function buildModelItem(ollamaStatus: OllamaStatus | null, models: Model[], modelError: string | null): SetupChecklistItem {
-  if (!ollamaStatus) {
+function buildModelItem(
+  engineStatus: DirectEngineStatus | null,
+  settings: AppSettings,
+  models: Model[],
+  modelError: string | null
+): SetupChecklistItem {
+  const resolvedModelPath = settings.directEngineModelPath || engineStatus?.modelPath || '';
+  const managedModelLabel = selectedManagedGemmaLabel(settings);
+
+  if (!engineStatus) {
     return {
       id: 'model',
-      label: 'Model Installed',
-      detail: 'Checking for installed local models.',
+      label: 'Configured Model',
+      detail: 'Checking for configured GGUF models.',
       state: 'checking',
     };
   }
 
-  if (!ollamaStatus.running) {
+  if (managedModelLabel && !settings.directEngineModelPath) {
     return {
       id: 'model',
-      label: 'Model Installed',
-      detail: 'Start Ollama before checking or downloading local models.',
-      state: 'attention',
+      label: 'Selected Model',
+      detail: `${managedModelLabel} is selected as the workspace model. ModernClaw can pull it directly through llama.cpp on first start.`,
+      state: 'ready',
+      notes: ['Advanced GGUF overrides stay optional and can be added later in Settings if you need a custom file.'],
     };
   }
 
-  if (models.length > 0) {
+  if (resolvedModelPath && engineStatus.modelFound && models.length > 0) {
     return {
       id: 'model',
-      label: 'Model Installed',
-      detail: `${models.length} model${models.length === 1 ? '' : 's'} available. Current choices include ${models
+      label: 'Selected Model',
+      detail: `${models.length} model${models.length === 1 ? '' : 's'} discovered. Current choices include ${models
         .slice(0, 3)
-        .map((model) => model.name)
+        .map((model) => formatWorkspaceModelName(model.name) || model.name)
         .join(', ')}${models.length > 3 ? ', and more.' : '.'}`,
       state: 'ready',
+      notes: [`Model path: ${resolvedModelPath}`],
     };
+  }
+
+  const notes = [];
+  if (!resolvedModelPath) {
+    notes.push('Choose the Gemma 4 E4B or E2B workspace model, or add an advanced GGUF override in Settings.');
+  } else if (!engineStatus.modelFound) {
+    notes.push(`Configured model was not found at ${resolvedModelPath}.`);
+  }
+
+  if (modelError) {
+    notes.push(modelError);
   }
 
   return {
     id: 'model',
-    label: 'Model Installed',
-    detail: 'Install at least one supported model before first chat.',
+    label: 'Selected Model',
+    detail: 'ModernClaw needs either a supported Gemma 4 workspace model or an advanced GGUF override before first chat.',
     state: 'attention',
-    notes: modelError ? [modelError] : ['Use onboarding or Settings to download a supported Gemma 4 model.'],
+    notes,
   };
 }
 

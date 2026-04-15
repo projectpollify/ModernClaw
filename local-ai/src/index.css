@@ -5,31 +5,31 @@
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
+    --foreground: 223 46% 20%;
+    --primary: 218 91% 54%;
     --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --border: 214.3 31.8% 91.4%;
+    --secondary: 215 65% 96%;
+    --secondary-foreground: 223 46% 20%;
+    --muted: 214 58% 97%;
+    --muted-foreground: 220 16% 44%;
+    --accent: 214 92% 95%;
+    --accent-foreground: 218 66% 26%;
+    --border: 214 42% 89%;
     --radius: 0.5rem;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    --background: 222 36% 10%;
     --foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
+    --primary: 218 91% 60%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 220 28% 18%;
     --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
+    --muted: 220 28% 16%;
+    --muted-foreground: 215 20% 70%;
+    --accent: 218 34% 22%;
     --accent-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
+    --border: 219 25% 24%;
   }
 }
 
@@ -47,5 +47,139 @@
 
   #root {
     min-height: 100vh;
+  }
+}
+
+@keyframes modernclaw-thinking-ring {
+  0%,
+  100% {
+    transform: scale(0.9);
+    opacity: 0.4;
+  }
+
+  50% {
+    transform: scale(1.08);
+    opacity: 0.85;
+  }
+}
+
+@keyframes modernclaw-thinking-core {
+  0%,
+  100% {
+    transform: scale(0.92);
+    opacity: 0.92;
+  }
+
+  50% {
+    transform: scale(1.12);
+    opacity: 1;
+  }
+}
+
+@keyframes modernclaw-thinking-orbit {
+  from {
+    transform: rotate(0deg) translateX(11px) scale(0.95);
+  }
+
+  to {
+    transform: rotate(360deg) translateX(11px) scale(1.05);
+  }
+}
+
+.mc-thinking-pulse {
+  position: relative;
+  display: inline-flex;
+  height: 1.5rem;
+  width: 1.5rem;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.mc-thinking-pulse--compact {
+  height: 1rem;
+  width: 1rem;
+}
+
+.mc-thinking-pulse__ring,
+.mc-thinking-pulse__core,
+.mc-thinking-pulse__orbit {
+  position: absolute;
+  border-radius: 9999px;
+}
+
+.mc-thinking-pulse__ring {
+  inset: 0.125rem;
+  border: 1px solid hsl(var(--primary) / 0.45);
+  background: radial-gradient(circle, hsl(var(--primary) / 0.18), transparent 68%);
+  animation: modernclaw-thinking-ring 1.8s ease-in-out infinite;
+}
+
+.mc-thinking-pulse__core {
+  height: 0.45rem;
+  width: 0.45rem;
+  background: hsl(var(--primary));
+  box-shadow: 0 0 0.6rem hsl(var(--primary) / 0.45);
+  animation: modernclaw-thinking-core 1.35s ease-in-out infinite;
+}
+
+.mc-thinking-pulse__orbit {
+  top: 50%;
+  left: 50%;
+  height: 0.22rem;
+  width: 0.22rem;
+  margin-top: -0.11rem;
+  margin-left: -0.11rem;
+  background: hsl(var(--primary));
+  opacity: 0.95;
+  animation: modernclaw-thinking-orbit 1.35s linear infinite;
+  transform-origin: center;
+}
+
+.mc-thinking-pulse__orbit--1 {
+  animation-delay: 0s;
+}
+
+.mc-thinking-pulse__orbit--2 {
+  animation-delay: -0.45s;
+}
+
+.mc-thinking-pulse__orbit--3 {
+  animation-delay: -0.9s;
+}
+
+.mc-thinking-pulse--compact .mc-thinking-pulse__ring {
+  inset: 0.08rem;
+}
+
+.mc-thinking-pulse--compact .mc-thinking-pulse__core {
+  height: 0.3rem;
+  width: 0.3rem;
+}
+
+.mc-thinking-pulse--compact .mc-thinking-pulse__orbit {
+  height: 0.16rem;
+  width: 0.16rem;
+  margin-top: -0.08rem;
+  margin-left: -0.08rem;
+  animation-name: modernclaw-thinking-orbit-compact;
+}
+
+@keyframes modernclaw-thinking-orbit-compact {
+  from {
+    transform: rotate(0deg) translateX(7px) scale(0.95);
+  }
+
+  to {
+    transform: rotate(360deg) translateX(7px) scale(1.05);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mc-thinking-pulse__ring,
+  .mc-thinking-pulse__core,
+  .mc-thinking-pulse__orbit {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
   }
 }

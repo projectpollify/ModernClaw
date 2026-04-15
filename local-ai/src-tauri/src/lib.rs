@@ -10,7 +10,7 @@ use commands::agents::{
     agent_get_active, agent_list, agent_update_default_model, agent_update_voice_settings,
 };
 use commands::chat::{
-    build_context, chat_send, check_ollama_status, delete_model, list_models, pull_model, AppState,
+    build_context, chat_send, check_direct_engine_status, list_models, AppState,
 };
 use commands::history::{
     conversation_create, conversation_delete, conversation_get, conversation_list,
@@ -23,13 +23,13 @@ use commands::memory::{
     memory_load_context, memory_open_folder, memory_read_file, memory_reject_curator_package,
     memory_store_chat_attachment, memory_write_file, MemoryState,
 };
-use commands::setup::{setup_open_external, setup_start_ollama};
+use commands::setup::{setup_open_external, setup_start_direct_engine, setup_stop_direct_engine};
 use commands::settings::{setting_get, setting_set, settings_get_all, settings_reset};
 use commands::voice::{voice_check_input_status, voice_check_status, voice_speak, voice_transcribe};
 use services::agent_repo::AgentRepository;
 use services::database::Database;
+use services::direct_engine::DirectEngineService;
 use services::memory::MemoryService;
-use services::ollama::OllamaService;
 use tauri::Manager;
 use tokio::sync::Mutex;
 
@@ -67,7 +67,7 @@ fn default_memory_path(app: &tauri::App) -> Result<PathBuf, String> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let app_state = AppState {
-        ollama: Arc::new(Mutex::new(OllamaService::new())),
+        direct_engine: Arc::new(Mutex::new(DirectEngineService::new())),
     };
 
     tauri::Builder::default()
@@ -103,12 +103,10 @@ pub fn run() {
         })
         .manage(app_state)
         .invoke_handler(tauri::generate_handler![
-            check_ollama_status,
+            check_direct_engine_status,
             list_models,
             build_context,
             chat_send,
-            pull_model,
-            delete_model,
             agent_list,
             agent_get_active,
             agent_update_default_model,
@@ -138,7 +136,8 @@ pub fn run() {
             memory_open_folder,
             memory_store_chat_attachment,
             setup_open_external,
-            setup_start_ollama,
+            setup_start_direct_engine,
+            setup_stop_direct_engine,
             settings_get_all,
             setting_set,
             setting_get,

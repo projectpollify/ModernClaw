@@ -1,34 +1,22 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { DEFAULT_FLOOR_MODEL } from '@/lib/voiceCatalog';
-import { ollamaApi, type Model, type ModelPullProgress, type OllamaStatus } from '@/services/ollama';
-
-export interface ModelDownloadProgress {
-  model: string;
-  status: string;
-  digest?: string;
-  total?: number;
-  completed?: number;
-  percent?: number;
-  done: boolean;
-}
-
-function delay(ms: number) {
-  return new Promise((resolve) => window.setTimeout(resolve, ms));
-}
+import { resolvePreferredModelName } from '@/lib/modelSelection';
+import { agentApi } from '@/services/agents';
+import { engineApi, type DirectEngineStatus, type Model } from '@/services/engine';
+import { setupApi } from '@/services/setup';
 
 interface ModelState {
   models: Model[];
   currentModel: string | null;
-  ollamaStatus: OllamaStatus | null;
+  engineStatus: DirectEngineStatus | null;
   isLoading: boolean;
-  downloadingModel: string | null;
-  downloadProgress: ModelDownloadProgress | null;
+  isSwitching: boolean;
   error: string | null;
   checkStatus: () => Promise<void>;
   loadModels: () => Promise<void>;
   setCurrentModel: (name: string | null) => void;
-  downloadModel: (name: string) => Promise<void>;
+  selectModel: (name: string | null) => Promise<boolean>;
   deleteModel: (name: string) => Promise<void>;
   refresh: () => Promise<void>;
   clearError: () => void;
@@ -39,22 +27,30 @@ export const useModelStore = create<ModelState>()(
     (set, get) => ({
       models: [],
       currentModel: DEFAULT_FLOOR_MODEL,
-      ollamaStatus: null,
+      engineStatus: null,
       isLoading: false,
-      downloadingModel: null,
-      downloadProgress: null,
+      isSwitching: false,
       error: null,
 
       checkStatus: async () => {
         try {
-          const status = await ollamaApi.checkStatus();
-          set({ ollamaStatus: status, error: null });
+          const status = await engineApi.checkStatus();
+          set({ engineStatus: status, error: null });
 
-          if (status.running) {
+          if (status.running || status.modelFound) {
             await get().loadModels();
           }
         } catch (error) {
-          set({ error: String(error), ollamaStatus: { running: false, error: String(error) } });
+          set({
+            error: String(error),
+            engineStatus: {
+              running: false,
+              baseUrl: 'http://127.0.0.1:8080',
+              executableFound: false,
+              modelFound: false,
+              error: String(error),
+            },
+          });
         }
       },
 
@@ -62,14 +58,12 @@ export const useModelStore = create<ModelState>()(
         set({ isLoading: true });
 
         try {
-          const models = await ollamaApi.listModels();
+          const models = await engineApi.listModels();
           const currentModel = get().currentModel;
-          const modelNames = new Set(models.map((model) => model.name));
-          const nextCurrentModel = modelNames.has(DEFAULT_FLOOR_MODEL)
-            ? DEFAULT_FLOOR_MODEL
-            : currentModel && modelNames.has(currentModel)
-              ? currentModel
-              : models[0]?.name ?? null;
+          const nextCurrentModel = resolvePreferredModelName(
+            currentModel ?? DEFAULT_FLOOR_MODEL,
+            models.map((model) => model.name)
+          );
 
           set({
             models,
@@ -86,80 +80,56 @@ export const useModelStore = create<ModelState>()(
         set({ currentModel: name });
       },
 
-      downloadModel: async (name) => {
-        const trimmedName = name.trim();
-        if (!trimmedName) {
-          return;
+      selectModel: async (name) => {
+        const previousModel = get().currentModel;
+        if (!name) {
+          return false;
         }
 
         set({
-          downloadingModel: trimmedName,
-          downloadProgress: {
-            model: trimmedName,
-            status: 'Preparing download...',
-            done: false,
-          },
+          currentModel: name,
+          isSwitching: true,
           error: null,
         });
 
         try {
-          await ollamaApi.pullModel(trimmedName, (progress: ModelPullProgress) => {
-            set({
-              downloadProgress: mapPullProgress(progress),
-            });
-          });
+          const activeAgent = await agentApi.getActiveAgent();
+          await agentApi.updateDefaultModel(activeAgent.agentId, name);
 
-          let installed = false;
-
-          for (let attempt = 0; attempt < 5; attempt += 1) {
-            await get().loadModels();
-
-            if (get().models.some((model) => model.name === trimmedName)) {
-              installed = true;
-              break;
-            }
-
-            set({
-              downloadProgress: {
-                model: trimmedName,
-                status: 'Verifying installed model...',
-                done: false,
-              },
-            });
-
-            await delay(1200);
+          if (get().engineStatus?.running && previousModel !== name) {
+            await setupApi.startDirectEngine();
           }
 
-          if (!installed) {
-            set({
-              error:
-                `ModernClaw could not confirm that ${trimmedName} finished installing yet. ` +
-                'Ollama may still be working in the background. Refresh again in a moment.',
-            });
-            return;
-          }
-
-          set((state) => ({
-            currentModel: state.currentModel ?? trimmedName,
-          }));
+          await get().refresh();
+          set({ isSwitching: false });
+          return true;
         } catch (error) {
-          set({ error: String(error) });
-        } finally {
-          set({ downloadingModel: null, downloadProgress: null });
+          set({
+            currentModel: previousModel,
+            isSwitching: false,
+            error: String(error),
+          });
+          return false;
         }
       },
 
       deleteModel: async (name) => {
-        try {
-          await ollamaApi.deleteModel(name);
-          await get().loadModels();
+        const target = get().models.find((model) => model.name === name);
+        if (!target?.path) {
+          set({ error: 'Only locally discovered GGUF files can be removed from this screen.' });
+          return;
+        }
 
-          if (get().currentModel === name) {
-            const remaining = get().models.filter((model) => model.name !== name);
-            set({ currentModel: remaining[0]?.name ?? null });
-          }
-        } catch (error) {
-          set({ error: String(error) });
+        try {
+          await setupApi.openExternal(target.path);
+          set({
+            error:
+              'ModernClaw opened the model location so you can remove the GGUF manually. Automatic file deletion is disabled for safety.',
+          });
+        } catch {
+          set({
+            error: `Remove the file manually at ${target.path}. Automatic deletion is disabled for safety.`,
+          });
         }
       },
 
@@ -175,22 +145,3 @@ export const useModelStore = create<ModelState>()(
     }
   )
 );
-
-function mapPullProgress(progress: ModelPullProgress): ModelDownloadProgress {
-  const percent =
-    typeof progress.completed === 'number' &&
-    typeof progress.total === 'number' &&
-    progress.total > 0
-      ? Math.max(0, Math.min(100, Math.round((progress.completed / progress.total) * 100)))
-      : undefined;
-
-  return {
-    model: progress.model,
-    status: progress.status,
-    digest: progress.digest,
-    total: progress.total,
-    completed: progress.completed,
-    percent,
-    done: progress.done,
-  };
-}

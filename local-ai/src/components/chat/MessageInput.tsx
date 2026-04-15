@@ -3,6 +3,7 @@ import { convertAudioBlobToWav } from '@/lib/audio';
 import { cn } from '@/lib/utils';
 import type { AudioNoteDraft } from '@/types';
 import { useChatStore } from '@/stores/chatStore';
+import { useModelStore } from '@/stores/modelStore';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useVoiceStore } from '@/stores/voiceStore';
 
@@ -41,6 +42,7 @@ export function MessageInput() {
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const { sendMessage, isLoading } = useChatStore();
+  const isSwitchingModel = useModelStore((state) => state.isSwitching);
   const settings = useSettingsStore((state) => state.settings);
   const { transcribeAudio, isTranscribing, setError } = useVoiceStore();
 
@@ -73,6 +75,7 @@ export function MessageInput() {
     if (
       (!input.trim() && pendingImages.length === 0 && pendingAudioNotes.length === 0) ||
       isLoading ||
+      isSwitchingModel ||
       hasPendingAudioTranscription
     ) {
       return;
@@ -471,7 +474,7 @@ export function MessageInput() {
                   ? 'Type a message, drop media, or record an audio note...'
                   : 'Type a message or drop media...'
               }
-              disabled={isLoading || isTranscribing || hasPendingAudioTranscription}
+              disabled={isLoading || isSwitchingModel || isTranscribing || hasPendingAudioTranscription}
               rows={1}
               className={cn(
                 'w-full resize-none rounded-xl border border-border bg-background px-4 py-3 pr-12',
@@ -502,6 +505,7 @@ export function MessageInput() {
             onClick={() => fileInputRef.current?.click()}
             disabled={
               isLoading ||
+              isSwitchingModel ||
               isTranscribing ||
               hasPendingAudioTranscription ||
               (pendingImages.length >= MAX_IMAGE_ATTACHMENTS && pendingAudioNotes.length >= MAX_AUDIO_ATTACHMENTS)
@@ -520,7 +524,7 @@ export function MessageInput() {
           {canUseVoiceInput ? (
             <button
               onClick={() => void handleVoiceToggle()}
-              disabled={isLoading || isTranscribing || isPreparingMic || hasPendingAudioTranscription}
+              disabled={isLoading || isSwitchingModel || isTranscribing || isPreparingMic || hasPendingAudioTranscription}
               aria-label={isRecording ? 'Stop recording' : 'Start recording'}
               title={isRecording ? 'Stop recording audio note' : 'Record audio note'}
               className={cn(
@@ -540,6 +544,7 @@ export function MessageInput() {
             disabled={
               (!input.trim() && pendingImages.length === 0 && pendingAudioNotes.length === 0) ||
               isLoading ||
+              isSwitchingModel ||
               isTranscribing ||
               hasPendingAudioTranscription
             }

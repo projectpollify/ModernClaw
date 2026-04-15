@@ -15,6 +15,7 @@ export interface DbMessage {
   content: string;
   tokens_used: number | null;
   feedback: 'up' | 'down' | null;
+  feedback_note: string | null;
   created_at: string;
 }
 

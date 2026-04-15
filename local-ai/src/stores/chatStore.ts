@@ -1,11 +1,13 @@
 import { create } from 'zustand';
 import { attachmentApi } from '@/services/attachments';
-import type { AudioNoteDraft, Message } from '@/types';
+import type { AudioNoteDraft, Message, MessageContextStats, MessageMetrics } from '@/types';
+import { DEFAULT_FLOOR_MODEL } from '@/lib/voiceCatalog';
 import { generateTitleFromMessage } from '@/lib/generateTitle';
-import { contextApi } from '@/services/context';
+import { contextApi, type ContextStats } from '@/services/context';
+import { engineApi, type ChatMessage, type ChatResponse } from '@/services/engine';
 import { historyApi } from '@/services/history';
-import { ollamaApi, type ChatMessage, type ChatResponse } from '@/services/ollama';
 import { useConversationStore } from '@/stores/conversationStore';
+import { useModelStore } from '@/stores/modelStore';
 import { useSettingsStore } from '@/stores/settingsStore';
 
 interface ChatState {
@@ -16,9 +18,10 @@ interface ChatState {
   currentModel: string | null;
   currentConversationId: string | null;
   streamingContent: string;
+  streamingMetrics: MessageMetrics | null;
   error: string | null;
   sendMessage: (content: string, imageFiles?: File[], audioNotes?: AudioNoteDraft[]) => Promise<void>;
-  setMessageFeedback: (messageId: string, feedback?: 'up' | 'down') => Promise<void>;
+  setMessageFeedback: (messageId: string, feedback?: 'up' | 'down', feedbackNote?: string) => Promise<void>;
   setModel: (model: string) => void;
   newConversation: (conversationId: string) => void;
   loadConversation: (id: string, messages?: Message[]) => void;
@@ -32,13 +35,15 @@ export const useChatStore = create<ChatState>()((set, get) => ({
   messagesByConversation: {},
   isLoading: false,
   isStreaming: false,
-  currentModel: 'nchapman/dolphin3.0-qwen2.5:3b',
+  currentModel: DEFAULT_FLOOR_MODEL,
   currentConversationId: null,
   streamingContent: '',
+  streamingMetrics: null,
   error: null,
 
   sendMessage: async (content: string, imageFiles: File[] = [], audioNotes: AudioNoteDraft[] = []) => {
     const { currentModel, messages, currentConversationId } = get();
+    const selectedModel = useModelStore.getState().currentModel ?? currentModel;
     const appSettings = useSettingsStore.getState().settings;
     const trimmedContent = content.trim();
     const normalizedAudioNotes = audioNotes
@@ -48,7 +53,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
       }))
       .filter((note) => note.transcript);
 
-    if (!currentModel) {
+    if (!selectedModel) {
       set({ error: 'No model selected' });
       return;
     }
@@ -61,7 +66,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
     let conversationId = currentConversationId ?? conversationStore.currentId;
 
     if (!conversationId) {
-      conversationId = await conversationStore.createConversation(currentModel);
+      conversationId = await conversationStore.createConversation(selectedModel);
     }
 
     const attachments = await Promise.all([
@@ -107,7 +112,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
       const firstUserMessage = items.find((message) => message.role === 'user');
 
       await useConversationStore.getState().updateConversation(conversationId, {
-        model: currentModel,
+        model: selectedModel,
         messageCount: items.length,
         title:
           currentConversation?.title === 'New Chat' && firstUserMessage
@@ -119,23 +124,26 @@ export const useChatStore = create<ChatState>()((set, get) => ({
       });
     };
 
-    set((state) => ({
-      messages: nextMessages,
-      messagesByConversation: {
-        ...state.messagesByConversation,
-        [conversationId]: nextMessages,
+      set((state) => ({
+        messages: nextMessages,
+        messagesByConversation: {
+          ...state.messagesByConversation,
+          [conversationId]: nextMessages,
       },
-      isLoading: true,
-      isStreaming: false,
-      currentConversationId: conversationId,
-      streamingContent: '',
-      error: null,
-    }));
+        isLoading: true,
+        isStreaming: false,
+        currentModel: selectedModel,
+        currentConversationId: conversationId,
+        streamingContent: '',
+        streamingMetrics: null,
+        error: null,
+      }));
 
     const assistantMessageId = crypto.randomUUID();
     let finalizedAssistantMessage: Message | null = null;
     let fullContent = '';
     let didCompleteStream = false;
+    let responseMetrics: MessageMetrics | null = null;
 
     const isConversationVisible = () => get().currentConversationId === conversationId;
 
@@ -146,7 +154,8 @@ export const useChatStore = create<ChatState>()((set, get) => ({
             isLoading: false,
             isStreaming: false,
             streamingContent: '',
-            error: errorMessage ?? 'No response received from Ollama.',
+            streamingMetrics: null,
+            error: errorMessage ?? 'No response received from Direct Engine.',
           });
         }
         return;
@@ -158,6 +167,8 @@ export const useChatStore = create<ChatState>()((set, get) => ({
         content: fullContent,
         createdAt: new Date(),
         conversationId,
+        tokensUsed: responseMetrics?.outputTokens ?? estimateTokens(fullContent),
+        metrics: responseMetrics ?? undefined,
       };
 
       finalizedAssistantMessage = assistantMessage;
@@ -177,6 +188,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
           nextState.isLoading = false;
           nextState.isStreaming = false;
           nextState.streamingContent = '';
+          nextState.streamingMetrics = null;
           nextState.error = errorMessage;
         }
 
@@ -191,28 +203,38 @@ export const useChatStore = create<ChatState>()((set, get) => ({
       await syncConversationState(nextMessages);
 
       const conversationHistory: ChatMessage[] = messages.map(toChatMessage);
-      const { messages: contextMessages } = await contextApi.buildContext(
+      const { messages: contextMessages, stats } = await contextApi.buildContext(
         conversationHistory,
         toChatMessage(userMessage),
         appSettings.contextWindowSize
       );
+      responseMetrics = {
+        model: selectedModel,
+        context: mapContextStats(stats),
+      };
+      if (isConversationVisible()) {
+        set({ streamingMetrics: responseMetrics });
+      }
 
-      await ollamaApi.sendMessage(
-        currentModel,
+      await engineApi.sendMessage(
+        selectedModel,
         contextMessages,
         conversationId,
         (chunk: ChatResponse) => {
+          responseMetrics = mergeResponseMetrics(responseMetrics, chunk, fullContent);
           if (chunk.message?.content) {
             fullContent += chunk.message.content;
             if (appSettings.streamResponses && isConversationVisible()) {
               set({
                 streamingContent: fullContent,
                 isStreaming: true,
+                streamingMetrics: responseMetrics,
               });
             }
           }
 
           if (chunk.done) {
+            responseMetrics = finalizeResponseMetrics(responseMetrics, fullContent);
             didCompleteStream = true;
             finalizeAssistantMessage();
           }
@@ -246,15 +268,24 @@ export const useChatStore = create<ChatState>()((set, get) => ({
           isLoading: false,
           isStreaming: false,
           streamingContent: '',
-          error: String(error),
+          streamingMetrics: null,
+          error: normalizeChatError(error),
         });
       }
     }
   },
 
-  setMessageFeedback: async (messageId: string, feedback) => {
+  setMessageFeedback: async (messageId: string, feedback, feedbackNote) => {
     const updateMessages = (items: Message[]) =>
-      items.map((message) => (message.id === messageId ? { ...message, feedback } : message));
+      items.map((message) =>
+        message.id === messageId
+          ? {
+              ...message,
+              feedback,
+              feedbackNote: feedback === 'down' ? feedbackNote ?? message.feedbackNote : undefined,
+            }
+          : message
+      );
 
     const { currentConversationId } = get();
     const conversationId = Object.entries(get().messagesByConversation).find(([, items]) =>
@@ -281,7 +312,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
     }));
 
     try {
-      await historyApi.setMessageFeedback(messageId, feedback);
+      await historyApi.setMessageFeedback(messageId, feedback, feedback === 'down' ? feedbackNote : undefined);
     } catch (error) {
       set((state) => ({
         messagesByConversation: {
@@ -307,6 +338,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
       messages: [],
       currentConversationId: conversationId,
       streamingContent: '',
+      streamingMetrics: null,
       error: null,
       isLoading: false,
       isStreaming: false,
@@ -322,6 +354,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
         [id]: messages,
       },
       streamingContent: '',
+      streamingMetrics: null,
       error: null,
       isLoading: false,
       isStreaming: false,
@@ -336,13 +369,14 @@ export const useChatStore = create<ChatState>()((set, get) => ({
       return {
         messagesByConversation: nextMessagesByConversation,
         ...(state.currentConversationId === id
-          ? {
-              currentConversationId: null,
-              messages: [],
-              streamingContent: '',
-              isLoading: false,
-              isStreaming: false,
-            }
+            ? {
+                currentConversationId: null,
+                messages: [],
+                streamingContent: '',
+                streamingMetrics: null,
+                isLoading: false,
+                isStreaming: false,
+              }
           : {}),
       };
     }),
@@ -355,6 +389,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
       messagesByConversation: {},
       currentConversationId: null,
       streamingContent: '',
+      streamingMetrics: null,
       error: null,
       isLoading: false,
       isStreaming: false,
@@ -382,4 +417,94 @@ function buildUserMessageContent(content: string, audioNotes: AudioNoteDraft[]):
     .join('\n\n');
 
   return content ? `${content}\n\n${transcriptSections}` : transcriptSections;
+}
+
+function normalizeChatError(error: unknown): string {
+  const rawError = String(error);
+  const normalized = rawError.toLowerCase();
+
+  if (normalized.includes('model failed to load')) {
+    return 'Direct Engine is online, but the selected model failed to load. Check the llama.cpp logs and retry.';
+  }
+
+  if (
+    normalized.includes('connection refused') ||
+    normalized.includes("couldn't connect") ||
+    normalized.includes('failed to connect')
+  ) {
+    return 'ModernClaw could not reach Direct Engine at http://127.0.0.1:8080/v1/models. Start the engine from Setup and try again.';
+  }
+
+  return rawError;
+}
+
+function mapContextStats(stats: ContextStats): MessageContextStats {
+  return {
+    systemTokens: stats.system_tokens,
+    historyTokens: stats.history_tokens,
+    totalTokens: stats.total_tokens,
+    maxTokens: stats.max_tokens,
+    messagesIncluded: stats.messages_included,
+    messagesTruncated: stats.messages_truncated,
+    usagePercent: stats.usage_percent,
+  };
+}
+
+function mergeResponseMetrics(
+  current: MessageMetrics | null,
+  chunk: ChatResponse,
+  fullContentBeforeChunk: string
+): MessageMetrics {
+  const merged: MessageMetrics = {
+    ...(current ?? {}),
+    model: chunk.model || current?.model,
+    promptTokens: chunk.prompt_eval_count ?? current?.promptTokens,
+    outputTokens: chunk.eval_count ?? current?.outputTokens,
+    totalDurationMs: normalizeDuration(chunk.total_duration) ?? current?.totalDurationMs,
+    finishReason: chunk.finish_reason ?? current?.finishReason,
+  };
+
+  const completedContent = fullContentBeforeChunk + (chunk.message?.content ?? '');
+
+  if (!merged.outputTokens && completedContent.trim()) {
+    merged.outputTokens = estimateTokens(completedContent);
+  }
+
+  if (merged.outputTokens && merged.totalDurationMs && merged.totalDurationMs > 0) {
+    merged.tokensPerSecond = merged.outputTokens / (merged.totalDurationMs / 1000);
+  }
+
+  return merged;
+}
+
+function finalizeResponseMetrics(current: MessageMetrics | null, content: string): MessageMetrics | null {
+  if (!current && !content.trim()) {
+    return null;
+  }
+
+  const finalized: MessageMetrics = {
+    ...(current ?? {}),
+  };
+
+  if (!finalized.outputTokens && content.trim()) {
+    finalized.outputTokens = estimateTokens(content);
+  }
+
+  if (finalized.outputTokens && finalized.totalDurationMs && finalized.totalDurationMs > 0) {
+    finalized.tokensPerSecond = finalized.outputTokens / (finalized.totalDurationMs / 1000);
+  }
+
+  return finalized;
+}
+
+function normalizeDuration(rawDuration: number | undefined) {
+  if (!rawDuration || rawDuration <= 0) {
+    return undefined;
+  }
+
+  return rawDuration >= 1_000_000 ? rawDuration / 1_000_000 : rawDuration;
+}
+
+function estimateTokens(content: string) {
+  return Math.max(1, Math.ceil(content.length / 4));
 }

@@ -5,8 +5,11 @@ import { MemoryView } from '@/components/memory/MemoryView';
 import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
 import { SetupView } from '@/components/setup/SetupView';
 import { SettingsView } from '@/components/settings/SettingsView';
+import { resolvePreferredModelName } from '@/lib/modelSelection';
+import { DEFAULT_FLOOR_MODEL, LIGHTWEIGHT_FLOOR_MODEL } from '@/lib/voiceCatalog';
 import { useTheme } from '@/hooks/useTheme';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import { setupApi } from '@/services/setup';
 import { useAgentStore } from '@/stores/agentStore';
 import { useChatStore } from '@/stores/chatStore';
 import { useConversationStore } from '@/stores/conversationStore';
@@ -27,6 +30,9 @@ function App() {
   const restoreLatestConversation = useConversationStore((state) => state.restoreLatestConversation);
   const initializeMemory = useMemoryStore((state) => state.initialize);
   const currentModel = useModelStore((state) => state.currentModel);
+  const availableModels = useModelStore((state) => state.models);
+  const engineStatus = useModelStore((state) => state.engineStatus);
+  const refreshModelState = useModelStore((state) => state.refresh);
   const setCurrentModel = useModelStore((state) => state.setCurrentModel);
   const setChatModel = useChatStore((state) => state.setModel);
   const loadSettings = useSettingsStore((state) => state.loadSettings);
@@ -37,6 +43,9 @@ function App() {
 
   const activeAgentId = activeAgent?.agentId ?? null;
   const activeAgentDefaultModel = activeAgent?.defaultModel ?? null;
+  const startupRefreshRequested = useRef(false);
+  const autoStartAttemptedFor = useRef<string | null>(null);
+  const selectedWorkspaceModel = activeAgentDefaultModel ?? settings.defaultModel ?? null;
 
   useEffect(() => {
     void loadSettings();
@@ -77,18 +86,84 @@ function App() {
   ]);
 
   useEffect(() => {
+    if (!hasLoadedSettings || !hasLoadedAgents || !activeAgentId || startupRefreshRequested.current) {
+      return;
+    }
+
+    startupRefreshRequested.current = true;
+    void refreshModelState();
+  }, [activeAgentId, hasLoadedAgents, hasLoadedSettings, refreshModelState]);
+
+  useEffect(() => {
     if (!hasLoadedSettings || !hasLoadedAgents || !activeAgentId) {
       return;
     }
 
-    setCurrentModel(activeAgentDefaultModel ?? settings.defaultModel ?? null);
+    setCurrentModel(
+      resolvePreferredModelName(
+        activeAgentDefaultModel ?? settings.defaultModel ?? null,
+        availableModels.map((model) => model.name)
+      )
+    );
   }, [
     activeAgentDefaultModel,
     activeAgentId,
+    availableModels,
     hasLoadedAgents,
     hasLoadedSettings,
     setCurrentModel,
     settings.defaultModel,
+  ]);
+
+  useEffect(() => {
+    if (!hasLoadedSettings || !hasLoadedAgents || !activeAgentId || !engineStatus) {
+      return;
+    }
+
+    const hasManagedModelSelection = [DEFAULT_FLOOR_MODEL, LIGHTWEIGHT_FLOOR_MODEL].includes(
+      (selectedWorkspaceModel ?? '').trim()
+    );
+    const hasAdvancedModelOverride = Boolean(settings.directEngineModelPath?.trim());
+    const canAutoStart =
+      engineStatus.executableFound &&
+      !engineStatus.running &&
+      (hasManagedModelSelection || hasAdvancedModelOverride || engineStatus.modelFound);
+
+    if (!canAutoStart) {
+      return;
+    }
+
+    const autoStartKey = [
+      selectedWorkspaceModel ?? '',
+      settings.directEngineModelPath ?? '',
+      engineStatus.executablePath ?? '',
+    ].join('|');
+
+    if (autoStartAttemptedFor.current === autoStartKey) {
+      return;
+    }
+
+    autoStartAttemptedFor.current = autoStartKey;
+
+    const autoStartDirectEngine = async () => {
+      try {
+        await setupApi.startDirectEngine();
+      } catch {
+        // Let the existing setup UI surface engine startup errors without looping forever.
+      } finally {
+        await refreshModelState();
+      }
+    };
+
+    void autoStartDirectEngine();
+  }, [
+    activeAgentId,
+    engineStatus,
+    hasLoadedAgents,
+    hasLoadedSettings,
+    refreshModelState,
+    selectedWorkspaceModel,
+    settings.directEngineModelPath,
   ]);
 
   useEffect(() => {
