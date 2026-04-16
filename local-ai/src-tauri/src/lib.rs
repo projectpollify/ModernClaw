@@ -23,7 +23,10 @@ use commands::memory::{
     memory_load_context, memory_open_folder, memory_read_file, memory_reject_curator_package,
     memory_store_chat_attachment, memory_write_file, MemoryState,
 };
-use commands::setup::{setup_open_external, setup_start_direct_engine, setup_stop_direct_engine};
+use commands::setup::{
+    boot_start_direct_engine, load_direct_engine_settings, setup_open_external,
+    setup_start_direct_engine, setup_stop_direct_engine,
+};
 use commands::settings::{setting_get, setting_set, settings_get_all, settings_reset};
 use commands::voice::{voice_check_input_status, voice_check_status, voice_speak, voice_transcribe};
 use services::agent_repo::AgentRepository;
@@ -97,8 +100,18 @@ pub fn run() {
                 root_path: default_root_path_string,
             };
 
+            let startup_engine_settings = load_direct_engine_settings(&db_state, Some(&memory_state.root_path))
+                .map_err(|error| IoError::other(format!("Direct engine startup settings failed: {}", error)))?;
+
             app.manage(db_state);
             app.manage(memory_state);
+
+            tauri::async_runtime::spawn(async move {
+                if let Err(error) = boot_start_direct_engine(startup_engine_settings).await {
+                    eprintln!("Direct engine auto-start skipped or failed during app boot: {}", error);
+                }
+            });
+
             Ok(())
         })
         .manage(app_state)

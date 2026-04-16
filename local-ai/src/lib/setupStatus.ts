@@ -1,6 +1,7 @@
-import { DEFAULT_FLOOR_MODEL, formatWorkspaceModelName, LIGHTWEIGHT_FLOOR_MODEL } from '@/lib/voiceCatalog';
+import { DEFAULT_FLOOR_MODEL, formatWorkspaceModelName } from '@/lib/voiceCatalog';
 import type { DirectEngineStatus, Model } from '@/services/engine';
 import type { MemoryFile } from '@/services/memory';
+import { normalizeDefaultModel } from '@/types/settings';
 import type { AppSettings } from '@/types/settings';
 import type { VoiceInputStatus, VoiceOutputStatus } from '@/types/voice';
 
@@ -107,16 +108,12 @@ export function buildSetupChecklist({
 }
 
 function hasManagedGemmaSelection(settings: AppSettings) {
-  return [DEFAULT_FLOOR_MODEL, LIGHTWEIGHT_FLOOR_MODEL].includes(settings.defaultModel ?? '');
+  return normalizeDefaultModel(settings.defaultModel) === DEFAULT_FLOOR_MODEL;
 }
 
 function selectedManagedGemmaLabel(settings: AppSettings) {
-  if (settings.defaultModel === DEFAULT_FLOOR_MODEL) {
+  if (normalizeDefaultModel(settings.defaultModel) === DEFAULT_FLOOR_MODEL) {
     return 'Gemma 4 E4B';
-  }
-
-  if (settings.defaultModel === LIGHTWEIGHT_FLOOR_MODEL) {
-    return 'Gemma 4 E2B';
   }
 
   return null;
@@ -161,8 +158,8 @@ function buildNextStep({
   if ((!resolvedModelPath || !engineStatus.modelFound) && !hasManagedModel && models.length === 0) {
     return {
       id: 'model',
-      title: 'Choose a Gemma 4 model',
-      detail: 'Pick the 4B or 2B Gemma 4 lane. A manual GGUF path is only needed for advanced overrides.',
+      title: 'Choose the Gemma 4 model',
+      detail: 'Use the supported Gemma 4 4B lane. A manual GGUF path is only needed for advanced overrides.',
     };
   }
 
@@ -272,7 +269,7 @@ function buildModelItem(
 
   const notes = [];
   if (!resolvedModelPath) {
-    notes.push('Choose the Gemma 4 E4B or E2B workspace model, or add an advanced GGUF override in Settings.');
+    notes.push('Choose the supported Gemma 4 E4B workspace model, or add an advanced GGUF override in Settings.');
   } else if (!engineStatus.modelFound) {
     notes.push(`Configured model was not found at ${resolvedModelPath}.`);
   }

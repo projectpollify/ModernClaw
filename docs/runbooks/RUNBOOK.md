@@ -2,16 +2,16 @@
 
 ## Purpose
 
-This runbook records the bring-up, recovery, and basic verification steps for the ModernClaw base workspace.
+This runbook records the bring-up, recovery, and basic verification steps for the Windows ModernClaw base workspace running the direct-engine path.
 
 ## Daily Bring-Up
 
-1. Make sure Ollama is installed.
-2. Start the app in Tauri dev mode.
-3. Use onboarding or the `Setup` page to confirm the next required action.
-4. If Ollama is not running yet, use the in-app `Start Ollama` action first.
-5. If no model is installed yet, use the in-app `Install Recommended Model` action.
-6. Confirm workspace files are ready before normal chat use.
+1. Make sure `llama-server.exe` is available on the machine.
+2. Make sure the official Gemma 4 4B model is installed for the managed Windows setup.
+3. Start the app in Tauri dev mode.
+4. Wait a few seconds for the boot-time direct-engine startup to complete.
+5. Confirm the app reaches normal chat use without needing a manual `Start Direct Engine` click.
+6. If this machine was migrated from an older setup and startup still looks stale, use the onboarding recovery flow below once, then restart the app.
 
 ### Commands
 
@@ -20,30 +20,29 @@ cd "C:\path\to\ModernClaw\local-ai"
 npm run tauri:dev
 ```
 
-If the in-app `Start Ollama` action does not bring Ollama up, start it manually in a separate PowerShell window:
-
-```powershell
-ollama serve
-```
-
 ## Fresh Install Flow
 
 This is the current intended repo-to-running-app path on a clean Windows machine.
 
 1. Install Node.js.
 2. Install the Rust toolchain with `rustup`.
-3. Install Ollama from [ollama.com/download](https://ollama.com/download), or use the in-app `Download Ollama` action once the app is running.
+3. Install `llama.cpp` so `llama-server.exe` is present on the machine.
 4. Clone the repo.
 5. Run `npm install` in `local-ai`.
 6. Run `npm run tauri:dev`.
-7. In onboarding or `Setup`, get Ollama running.
-8. Install the recommended model, currently `gemma4:e4b`.
+7. Complete onboarding.
+8. Use the supported managed model lane: official Gemma 4 4B.
 9. Confirm the workspace files are initialized.
-10. Open chat once the required setup summary is fully ready.
+10. Close the app once onboarding is complete.
+11. Reopen the app and confirm the engine starts automatically without user input.
+12. Open chat and send a normal text prompt.
 
 Current scope:
 
 - Windows is the validated platform
+- ModernClaw base on Windows is a one-model direct-engine app
+- the supported managed model lane is Gemma 4 4B
+- if a migrated machine shows stale startup state, re-running onboarding once is the approved reset path
 - voice can be skipped for first install
 - Piper and Whisper still require manual setup on a clean machine
 
@@ -64,17 +63,17 @@ A tester should be able to clone the repo, follow the docs, and reach normal cha
 5. Run `npm install`.
 6. Run `npm run tauri:dev`.
 7. Let onboarding guide the machine through setup.
-8. If Ollama is missing, use `Download Ollama` or manually install it from the documented URL.
-9. Use `Start Ollama`.
-10. Use `Install Recommended Model`.
-11. Confirm `SOUL.md`, `USER.md`, and `MEMORY.md` are created.
+8. Install or select the supported Gemma 4 4B lane.
+9. Confirm `SOUL.md`, `USER.md`, and `MEMORY.md` are created.
+10. Close the app once onboarding finishes.
+11. Reopen the app and confirm the engine starts on its own.
 12. Reach the chat screen and send a normal text prompt.
 
 ### Pass Criteria
 
 - the tester does not need extra verbal guidance beyond repo docs
 - the app makes the next required step obvious
-- Ollama startup is understandable even if the first automatic launch attempt fails
+- direct-engine startup happens automatically after onboarding is complete
 - model installation is obvious from onboarding or `Setup`
 - workspace initialization completes without manual file creation
 - chat works after required setup is green
@@ -84,6 +83,7 @@ A tester should be able to clone the repo, follow the docs, and reach normal cha
 - the tester has to guess what to do next
 - the tester has to open code or inspect source files to continue
 - the docs skip a required dependency or command
+- the app still requires a manual engine-start click after onboarding and restart
 - the app reports a blocker but does not point to a usable next action
 - the tester cannot tell whether setup is complete
 
@@ -126,6 +126,29 @@ npm run tauri:dev
 ### Sidebar appears lost
 
 If the app gets into a strange UI state, restart dev mode.
+
+### Startup shows `Direct Engine Offline` on a migrated machine
+
+This was reproduced on a machine that had older saved setup state from previous installs and experiments.
+
+Recovery path that worked:
+
+1. Go through onboarding again, or use the in-app restart-onboarding flow.
+2. Finish onboarding with the supported Gemma 4 4B lane.
+3. Let the app reach chat once.
+4. Close the app completely.
+5. Reopen the app.
+
+Expected result:
+
+- the red startup warning is gone
+- the direct engine starts automatically during boot
+- the user no longer needs to click `Start Direct Engine`
+
+Interpretation:
+
+- this is a saved-state recovery issue first
+- do not assume the executable or model install is broken until onboarding reset has been tried
 
 ## Voice Setup Notes
 
@@ -212,4 +235,5 @@ The app uses the `LocalAI` app-data root for runtime files, including:
 
 ## Current Model Stack
 
-- primary tested baseline: `gemma4:e4b`
+- primary tested baseline: `google/gemma-4-e4b`
+- Windows base currently documents a one-model setup only

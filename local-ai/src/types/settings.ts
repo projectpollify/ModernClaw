@@ -25,7 +25,19 @@ export interface AppSettings {
 }
 
 export function normalizeDefaultModel(model: string | null | undefined) {
-  if (!model || model === LEGACY_FLOOR_MODEL || model === LEGACY_FALLBACK_MODEL) {
+  const normalized = model?.trim().toLowerCase() ?? '';
+
+  if (
+    !model ||
+    model === LEGACY_FLOOR_MODEL ||
+    model === LEGACY_FALLBACK_MODEL ||
+    normalized.includes('gemma-4-e4b') ||
+    normalized.includes('gemma4-e4b') ||
+    normalized.includes('gemma4:e4b') ||
+    normalized.includes('gemma-4-e2b') ||
+    normalized.includes('gemma4-e2b') ||
+    normalized.includes('gemma4:e2b')
+  ) {
     return DEFAULT_FLOOR_MODEL;
   }
 

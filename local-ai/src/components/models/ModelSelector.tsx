@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { formatWorkspaceModelName, getCuratedFloorModelByName } from '@/lib/voiceCatalog';
+import { DEFAULT_FLOOR_MODEL, formatWorkspaceModelName, getCuratedFloorModelByName } from '@/lib/voiceCatalog';
 import { cn } from '@/lib/utils';
+import { normalizeDefaultModel } from '@/types/settings';
+import { useAgentStore } from '@/stores/agentStore';
 import { useModelStore } from '@/stores/modelStore';
+import { useSettingsStore } from '@/stores/settingsStore';
 
 export function ModelSelector() {
   const models = useModelStore((state) => state.models);
@@ -10,9 +13,25 @@ export function ModelSelector() {
   const checkStatus = useModelStore((state) => state.checkStatus);
   const isSwitching = useModelStore((state) => state.isSwitching);
   const selectModel = useModelStore((state) => state.selectModel);
+  const activeAgent = useAgentStore((state) => state.activeAgent);
+  const hasLoadedAgents = useAgentStore((state) => state.hasLoaded);
+  const settings = useSettingsStore((state) => state.settings);
+  const hasLoadedSettings = useSettingsStore((state) => state.hasLoaded);
   const [isOpen, setIsOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const servedModel = models.find((model) => model.served);
+  const selectedWorkspaceModel = normalizeDefaultModel(activeAgent?.defaultModel ?? settings.defaultModel ?? null);
+  const engineCanAutoStart = engineStatus
+    ? engineStatus.executableFound &&
+      (selectedWorkspaceModel === DEFAULT_FLOOR_MODEL ||
+        Boolean(settings.directEngineModelPath?.trim()) ||
+        engineStatus.modelFound)
+    : false;
+  const shouldShowStartupMessage =
+    hasLoadedSettings &&
+    hasLoadedAgents &&
+    engineCanAutoStart &&
+    !engineStatus?.running;
 
   useEffect(() => {
     void checkStatus();
@@ -36,6 +55,15 @@ export function ModelSelector() {
       void checkStatus();
     }
   };
+
+  if (shouldShowStartupMessage) {
+    return (
+      <div className="inline-flex h-9 items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 text-sm text-primary">
+        <SpinnerIcon className="h-4 w-4" />
+        <span className="max-w-64 truncate">Your Brain is firing up, please wait a moment</span>
+      </div>
+    );
+  }
 
   if (!engineStatus?.running) {
     return (
@@ -130,6 +158,28 @@ function ChevronIcon({ className }: { className?: string }) {
   return (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+    </svg>
+  );
+}
+
+function SpinnerIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle
+        className="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        strokeWidth="3"
+      />
+      <path
+        className="origin-center animate-spin"
+        d="M22 12a10 10 0 00-10-10"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }

@@ -11,7 +11,10 @@ const MAIN_WORKSPACE_DESCRIPTION: &str =
     "Primary local workspace for chat, memory, knowledge, and settings.";
 const JOE_SUPPORT_DESCRIPTION: &str =
     "Built-in AI support assistant for setup, troubleshooting, and product guidance.";
-const DEFAULT_AGENT_MODEL: &str = "gemma4:e4b";
+const DEFAULT_AGENT_MODEL: &str = "google/gemma-4-e4b";
+const LEGACY_MANAGED_AGENT_ALIAS: &str = "gemma4:e4b";
+const RETIRED_LIGHTWEIGHT_AGENT_MODEL: &str = "google/gemma-4-e2b";
+const RETIRED_LIGHTWEIGHT_AGENT_ALIAS: &str = "gemma4:e2b";
 const MAIN_WORKSPACE_PIPER_VOICE_PRESET: &str = "amy-medium";
 const JOE_SUPPORT_PIPER_VOICE_PRESET: &str = "joe-medium";
 const LEGACY_DEFAULT_AGENT_NAME: &str = "Default Brain";
@@ -209,15 +212,15 @@ impl<'a> AgentRepository<'a> {
                     ELSE description
                 END,
                 default_model = CASE
-                    WHEN default_model IS NULL OR default_model = '' OR default_model = ?8 THEN ?9
+                    WHEN default_model IS NULL OR default_model = '' OR default_model = ?8 OR default_model = ?9 OR default_model = ?10 OR default_model = ?11 THEN ?12
                     ELSE default_model
                 END,
                 piper_voice_preset = CASE
-                    WHEN piper_voice_preset IS NULL OR piper_voice_preset = '' THEN ?10
+                    WHEN piper_voice_preset IS NULL OR piper_voice_preset = '' THEN ?13
                     ELSE piper_voice_preset
                 END,
-                updated_at = ?11
-            WHERE agent_id = ?12
+                updated_at = ?14
+            WHERE agent_id = ?15
             "#,
             &[
                 &default_workspace_path,
@@ -228,6 +231,9 @@ impl<'a> AgentRepository<'a> {
                 &legacy_description,
                 &MAIN_WORKSPACE_DESCRIPTION,
                 &LEGACY_DEFAULT_AGENT_MODEL,
+                &LEGACY_MANAGED_AGENT_ALIAS,
+                &RETIRED_LIGHTWEIGHT_AGENT_MODEL,
+                &RETIRED_LIGHTWEIGHT_AGENT_ALIAS,
                 &DEFAULT_AGENT_MODEL,
                 &MAIN_WORKSPACE_PIPER_VOICE_PRESET,
                 &now,
@@ -245,21 +251,24 @@ impl<'a> AgentRepository<'a> {
                     ELSE description
                 END,
                 default_model = CASE
-                    WHEN default_model IS NULL OR default_model = '' OR default_model = ?4 THEN ?5
+                    WHEN default_model IS NULL OR default_model = '' OR default_model = ?4 OR default_model = ?5 OR default_model = ?6 OR default_model = ?7 THEN ?8
                     ELSE default_model
                 END,
                 piper_voice_preset = CASE
-                    WHEN piper_voice_preset IS NULL OR piper_voice_preset = '' THEN ?6
+                    WHEN piper_voice_preset IS NULL OR piper_voice_preset = '' THEN ?9
                     ELSE piper_voice_preset
                 END,
-                updated_at = ?7
-            WHERE agent_id = ?8
+                updated_at = ?10
+            WHERE agent_id = ?11
             "#,
             &[
                 &default_workspace_path,
                 &JOE_SUPPORT_NAME,
                 &JOE_SUPPORT_DESCRIPTION,
                 &LEGACY_DEFAULT_AGENT_MODEL,
+                &LEGACY_MANAGED_AGENT_ALIAS,
+                &RETIRED_LIGHTWEIGHT_AGENT_MODEL,
+                &RETIRED_LIGHTWEIGHT_AGENT_ALIAS,
                 &DEFAULT_AGENT_MODEL,
                 &JOE_SUPPORT_PIPER_VOICE_PRESET,
                 &now,

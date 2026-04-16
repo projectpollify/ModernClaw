@@ -23,7 +23,6 @@ export const CURATED_PIPER_VOICES: CuratedVoiceOption[] = [
 export const DEFAULT_PIPER_VOICE_ID = 'amy-medium';
 export const DEFAULT_WHISPER_MODEL_FILENAME = 'ggml-base.en.bin';
 export const DEFAULT_FLOOR_MODEL = 'google/gemma-4-e4b';
-export const LIGHTWEIGHT_FLOOR_MODEL = 'google/gemma-4-e2b';
 export const LEGACY_FLOOR_MODEL = 'nchapman/dolphin3.0-qwen2.5:3b';
 export const LEGACY_FALLBACK_MODEL = 'dolphin3:8b';
 
@@ -44,14 +43,6 @@ export const CURATED_FLOOR_MODELS: readonly CuratedFloorModel[] = [
     size: '5.3GB',
     description: 'Primary Gemma 4 setup for ModernClaw. Use this lane for the strongest supported local workspace experience.',
     recommended: true,
-  },
-  {
-    name: LIGHTWEIGHT_FLOOR_MODEL,
-    label: 'Gemma 4 2B',
-    laneLabel: 'Lightweight lane',
-    size: '5.0GB',
-    description: 'Smaller Gemma 4 lane for lighter local setups when you want lower resource use with the same supported family.',
-    recommended: false,
   },
 ] as const;
 

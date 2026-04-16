@@ -13,7 +13,7 @@ export function ModelDownloader() {
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border border-border bg-background/70 p-4 text-sm text-muted-foreground">
-        ModernClaw can launch the supported Gemma 4 workspace models directly through
+        ModernClaw can launch the supported Gemma 4 workspace model directly through
         <code className="mx-1 rounded bg-secondary px-1.5 py-0.5 text-xs">llama-server.exe</code>.
         Leave the advanced GGUF override blank unless you want to force a specific local file.
       </div>

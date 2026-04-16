@@ -7,6 +7,7 @@ use reqwest::Client;
 use tauri::State;
 use tokio::time::sleep;
 
+use crate::services::agent_repo::AgentRepository;
 use crate::services::direct_engine::{
     infer_alias_from_path, managed_model_spec_for_name, resolve_executable_path,
     resolve_preferred_model_path,
@@ -26,13 +27,29 @@ fn decode_setting_usize(value: Option<String>) -> Option<usize> {
     value.and_then(|raw| serde_json::from_str::<usize>(&raw).ok().or_else(|| raw.parse::<usize>().ok()))
 }
 
-fn load_direct_engine_settings(db_state: &DatabaseState) -> Result<DirectEngineSettings, String> {
-    Ok(DirectEngineSettings {
+pub(crate) fn load_direct_engine_settings(
+    db_state: &DatabaseState,
+    default_workspace_path: Option<&str>,
+) -> Result<DirectEngineSettings, String> {
+    let mut settings = DirectEngineSettings {
         executable_path: decode_setting_string(db_state.db.get_setting("directEngineExecutablePath")?),
         model_path: decode_setting_string(db_state.db.get_setting("directEngineModelPath")?),
         default_model: decode_setting_string(db_state.db.get_setting("defaultModel")?),
         context_window_size: decode_setting_usize(db_state.db.get_setting("contextWindowSize")?),
-    })
+    };
+
+    if let Some(default_workspace_path) = default_workspace_path {
+        let agent_repo = AgentRepository::new(&db_state.db);
+        if let Some(active_model) = agent_repo
+            .get_active_agent(default_workspace_path)?
+            .default_model
+            .filter(|value| !value.trim().is_empty())
+        {
+            settings.default_model = Some(active_model);
+        }
+    }
+
+    Ok(settings)
 }
 
 fn resolve_model_path(settings: &DirectEngineSettings) -> Option<PathBuf> {
@@ -89,55 +106,43 @@ async fn wait_for_direct_engine() -> Result<(), String> {
     Err("Direct engine did not come online at http://127.0.0.1:8080 or http://127.0.0.1:8081.".to_string())
 }
 
-#[tauri::command]
-pub async fn setup_open_external(target: String) -> Result<(), String> {
-    let trimmed = target.trim();
-    if trimmed.is_empty() {
-        return Err("No external target was provided.".to_string());
+async fn is_direct_engine_running() -> bool {
+    let client = match Client::builder().timeout(Duration::from_secs(2)).build() {
+        Ok(client) => client,
+        Err(_) => return false,
+    };
+
+    for base_url in [DIRECT_ENGINE_BASE_URL, DIRECT_ENGINE_FALLBACK_BASE_URL] {
+        match client.get(format!("{}/v1/models", base_url)).send().await {
+            Ok(response) if response.status().is_success() => return true,
+            _ => {}
+        }
     }
 
-    #[cfg(target_os = "windows")]
-    let mut command = {
-        let mut command = Command::new("cmd");
-        command.arg("/C").arg("start").arg("").arg(trimmed);
-        command
-    };
-
-    #[cfg(target_os = "macos")]
-    let mut command = {
-        let mut command = Command::new("open");
-        command.arg(trimmed);
-        command
-    };
-
-    #[cfg(all(unix, not(target_os = "macos")))]
-    let mut command = {
-        let mut command = Command::new("xdg-open");
-        command.arg(trimmed);
-        command
-    };
-
-    command
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .spawn()
-        .map_err(|error| format!("Failed to open external target: {}", error))?;
-
-    Ok(())
+    false
 }
 
-#[tauri::command]
-pub async fn setup_start_direct_engine(
-    db_state: State<'_, DatabaseState>,
+pub(crate) fn should_auto_start_direct_engine(settings: &DirectEngineSettings) -> bool {
+    resolve_executable_path(Some(settings)).is_some()
+        && (resolve_model_path(settings).is_some()
+            || settings
+                .default_model
+                .as_deref()
+                .and_then(managed_model_spec_for_name)
+                .is_some())
+}
+
+pub(crate) async fn start_direct_engine_with_settings(
+    settings: &DirectEngineSettings,
+    persist_resolved_model_path: Option<&DatabaseState>,
 ) -> Result<(), String> {
-    let settings = load_direct_engine_settings(&db_state)?;
-    let executable_path = resolve_executable_path(Some(&settings))
+    let executable_path = resolve_executable_path(Some(settings))
         .ok_or_else(|| "Set a llama-server executable path before starting the direct engine.".to_string())?;
     let managed_model = settings
         .default_model
         .as_deref()
         .and_then(managed_model_spec_for_name);
-    let model_path = resolve_model_path(&settings);
+    let model_path = resolve_model_path(settings);
 
     if model_path.is_none() && managed_model.is_none() {
         return Err(
@@ -146,20 +151,20 @@ pub async fn setup_start_direct_engine(
         );
     }
 
-    if settings
-        .model_path
-        .as_ref()
-        .map(|value| value.trim().is_empty())
-        .unwrap_or(true)
-    {
-        if let Some(model_path) = model_path.as_ref() {
-            let _ = db_state
-                .db
-                .set_setting(
+    if let Some(db_state) = persist_resolved_model_path {
+        if settings
+            .model_path
+            .as_ref()
+            .map(|value| value.trim().is_empty())
+            .unwrap_or(true)
+        {
+            if let Some(model_path) = model_path.as_ref() {
+                let _ = db_state.db.set_setting(
                     "directEngineModelPath",
                     &serde_json::to_string(&model_path.to_string_lossy().to_string())
                         .unwrap_or_else(|_| format!("\"{}\"", model_path.to_string_lossy())),
                 );
+            }
         }
     }
 
@@ -232,6 +237,59 @@ pub async fn setup_start_direct_engine(
         .map_err(|error| format!("Failed to start direct engine: {}", error))?;
 
     wait_for_direct_engine().await
+}
+
+pub(crate) async fn boot_start_direct_engine(settings: DirectEngineSettings) -> Result<(), String> {
+    if !should_auto_start_direct_engine(&settings) || is_direct_engine_running().await {
+        return Ok(());
+    }
+
+    start_direct_engine_with_settings(&settings, None).await
+}
+
+#[tauri::command]
+pub async fn setup_open_external(target: String) -> Result<(), String> {
+    let trimmed = target.trim();
+    if trimmed.is_empty() {
+        return Err("No external target was provided.".to_string());
+    }
+
+    #[cfg(target_os = "windows")]
+    let mut command = {
+        let mut command = Command::new("cmd");
+        command.arg("/C").arg("start").arg("").arg(trimmed);
+        command
+    };
+
+    #[cfg(target_os = "macos")]
+    let mut command = {
+        let mut command = Command::new("open");
+        command.arg(trimmed);
+        command
+    };
+
+    #[cfg(all(unix, not(target_os = "macos")))]
+    let mut command = {
+        let mut command = Command::new("xdg-open");
+        command.arg(trimmed);
+        command
+    };
+
+    command
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
+        .map_err(|error| format!("Failed to open external target: {}", error))?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn setup_start_direct_engine(
+    db_state: State<'_, DatabaseState>,
+) -> Result<(), String> {
+    let settings = load_direct_engine_settings(&db_state, None)?;
+    start_direct_engine_with_settings(&settings, Some(&db_state)).await
 }
 
 #[tauri::command]

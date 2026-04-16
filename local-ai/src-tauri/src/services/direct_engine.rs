@@ -418,12 +418,7 @@ pub fn resolve_preferred_model_path(settings: Option<&DirectEngineSettings>) -> 
     }
 
     let models = discover_local_models(settings);
-    let preferred_names = [
-        "google/gemma-4-e4b",
-        "google/gemma-4-e2b",
-        "gemma4:e4b",
-        "gemma4:e2b",
-    ];
+    let preferred_names = ["google/gemma-4-e4b", "gemma4:e4b"];
 
     for preferred_name in preferred_names {
         if let Some(path) = models
@@ -514,9 +509,6 @@ fn discover_managed_cache_roots() -> Vec<PathBuf> {
         cache_root
             .join("models--ggml-org--gemma-4-E4B-it-GGUF")
             .join("snapshots"),
-        cache_root
-            .join("models--ggml-org--gemma-4-E2B-it-GGUF")
-            .join("snapshots"),
     ];
 
     candidates
@@ -572,10 +564,6 @@ pub fn infer_alias_from_path(path: &Path) -> Option<String> {
         return Some("google/gemma-4-e4b".to_string());
     }
 
-    if filename.contains("gemma-4-e2b") || filename.contains("gemma4-e2b") {
-        return Some("google/gemma-4-e2b".to_string());
-    }
-
     None
 }
 
@@ -597,17 +585,6 @@ pub fn managed_model_spec_for_name(name: &str) -> Option<ManagedModelSpec> {
         });
     }
 
-    if normalized.contains("gemma-4-e2b")
-        || normalized.contains("gemma4-e2b")
-        || normalized.contains("gemma4:e2b")
-    {
-        return Some(ManagedModelSpec {
-            alias: "google/gemma-4-e2b",
-            hf_repo: "ggml-org/gemma-4-E2B-it-GGUF",
-            launch_label: "Managed Gemma 4 E2B from ggml-org/gemma-4-E2B-it-GGUF",
-        });
-    }
-
     None
 }
 
@@ -624,13 +601,6 @@ pub fn canonical_alias_for_name(name: &str) -> String {
         || normalized.contains("gemma4:e4b")
     {
         return "google/gemma-4-e4b".to_string();
-    }
-
-    if normalized.contains("gemma-4-e2b")
-        || normalized.contains("gemma4-e2b")
-        || normalized.contains("gemma4:e2b")
-    {
-        return "google/gemma-4-e2b".to_string();
     }
 
     name.trim().to_string()

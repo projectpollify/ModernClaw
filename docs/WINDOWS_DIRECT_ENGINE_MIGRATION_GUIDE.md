@@ -411,3 +411,15 @@ Use `ModernClawMacMulti` as the direct-engine reference implementation, but do t
 
 That is the safest path and the least confusing one.
 
+## Windows Startup Recovery Note
+
+One important Windows-specific behavior showed up during migration testing:
+
+- a machine with stale saved setup state can boot into a misleading `Direct Engine Offline` / setup-warning state even when the executable and model are present
+- the reliable recovery was to run onboarding again, finish setup with the supported Gemma 4 4B lane, close the app, and then reopen it
+- after that reset, the app booted cleanly and the direct engine started automatically without a manual `Start Direct Engine` click
+
+Practical rule:
+
+- treat this as a saved-state migration issue first
+- do not assume the engine install is broken until onboarding reset has been tried once

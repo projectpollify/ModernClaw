@@ -6,10 +6,9 @@ import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
 import { SetupView } from '@/components/setup/SetupView';
 import { SettingsView } from '@/components/settings/SettingsView';
 import { resolvePreferredModelName } from '@/lib/modelSelection';
-import { DEFAULT_FLOOR_MODEL, LIGHTWEIGHT_FLOOR_MODEL } from '@/lib/voiceCatalog';
+import { DEFAULT_FLOOR_MODEL } from '@/lib/voiceCatalog';
 import { useTheme } from '@/hooks/useTheme';
 import { useEffect, useRef } from 'react';
-import { setupApi } from '@/services/setup';
 import { useAgentStore } from '@/stores/agentStore';
 import { useChatStore } from '@/stores/chatStore';
 import { useConversationStore } from '@/stores/conversationStore';
@@ -19,6 +18,7 @@ import { useOnboardingStore } from '@/stores/onboardingStore';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useThemeStore } from '@/stores/themeStore';
 import { useViewStore } from '@/stores/uiStore';
+import { normalizeDefaultModel } from '@/types/settings';
 
 function App() {
   useTheme();
@@ -44,8 +44,7 @@ function App() {
   const activeAgentId = activeAgent?.agentId ?? null;
   const activeAgentDefaultModel = activeAgent?.defaultModel ?? null;
   const startupRefreshRequested = useRef(false);
-  const autoStartAttemptedFor = useRef<string | null>(null);
-  const selectedWorkspaceModel = activeAgentDefaultModel ?? settings.defaultModel ?? null;
+  const selectedWorkspaceModel = normalizeDefaultModel(activeAgentDefaultModel ?? settings.defaultModel ?? null);
 
   useEffect(() => {
     void loadSettings();
@@ -101,18 +100,17 @@ function App() {
 
     setCurrentModel(
       resolvePreferredModelName(
-        activeAgentDefaultModel ?? settings.defaultModel ?? null,
+        selectedWorkspaceModel,
         availableModels.map((model) => model.name)
       )
     );
   }, [
-    activeAgentDefaultModel,
     activeAgentId,
     availableModels,
     hasLoadedAgents,
     hasLoadedSettings,
     setCurrentModel,
-    settings.defaultModel,
+    selectedWorkspaceModel,
   ]);
 
   useEffect(() => {
@@ -120,42 +118,28 @@ function App() {
       return;
     }
 
-    const hasManagedModelSelection = [DEFAULT_FLOOR_MODEL, LIGHTWEIGHT_FLOOR_MODEL].includes(
-      (selectedWorkspaceModel ?? '').trim()
-    );
+    const hasManagedModelSelection = (selectedWorkspaceModel ?? '').trim() === DEFAULT_FLOOR_MODEL;
     const hasAdvancedModelOverride = Boolean(settings.directEngineModelPath?.trim());
-    const canAutoStart =
+    const shouldPollDuringBoot =
       engineStatus.executableFound &&
       !engineStatus.running &&
       (hasManagedModelSelection || hasAdvancedModelOverride || engineStatus.modelFound);
 
-    if (!canAutoStart) {
+    if (!shouldPollDuringBoot) {
       return;
     }
 
-    const autoStartKey = [
-      selectedWorkspaceModel ?? '',
-      settings.directEngineModelPath ?? '',
-      engineStatus.executablePath ?? '',
-    ].join('|');
+    let attemptsRemaining = 12;
+    const intervalId = window.setInterval(() => {
+      attemptsRemaining -= 1;
+      void refreshModelState();
 
-    if (autoStartAttemptedFor.current === autoStartKey) {
-      return;
-    }
-
-    autoStartAttemptedFor.current = autoStartKey;
-
-    const autoStartDirectEngine = async () => {
-      try {
-        await setupApi.startDirectEngine();
-      } catch {
-        // Let the existing setup UI surface engine startup errors without looping forever.
-      } finally {
-        await refreshModelState();
+      if (attemptsRemaining <= 0) {
+        window.clearInterval(intervalId);
       }
-    };
+    }, 1500);
 
-    void autoStartDirectEngine();
+    return () => window.clearInterval(intervalId);
   }, [
     activeAgentId,
     engineStatus,

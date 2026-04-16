@@ -23,6 +23,15 @@ function parseSettingValue(value: string) {
   }
 }
 
+function isRetiredModelReference(value: string | null | undefined) {
+  const normalized = value?.trim().toLowerCase() ?? '';
+  return (
+    normalized.includes('gemma-4-e2b') ||
+    normalized.includes('gemma4-e2b') ||
+    normalized.includes('gemma4:e2b')
+  );
+}
+
 export const useSettingsStore = create<SettingsState>()((set, get) => ({
   settings: DEFAULT_SETTINGS,
   isLoading: true,
@@ -38,21 +47,45 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
       const parsed = Object.fromEntries(
         Object.entries(stored).map(([key, value]) => [key, parseSettingValue(value)])
       );
+      const hasStoredDefaultModel = Object.prototype.hasOwnProperty.call(parsed, 'defaultModel');
+      const rawDefaultModel =
+        typeof parsed.defaultModel === 'string' || parsed.defaultModel === null
+          ? parsed.defaultModel
+          : DEFAULT_SETTINGS.defaultModel;
       const resolvedMemoryPath = typeof parsed.memoryPath === 'string' && parsed.memoryPath ? parsed.memoryPath : memoryPath;
       const resolvedVoicePreset =
         typeof parsed.piperVoicePreset === 'string' && parsed.piperVoicePreset
           ? parsed.piperVoicePreset
           : DEFAULT_SETTINGS.piperVoicePreset;
       const resolvedDefaultModel = normalizeDefaultModel(
-        typeof parsed.defaultModel === 'string' || parsed.defaultModel === null ? parsed.defaultModel : DEFAULT_SETTINGS.defaultModel
+        rawDefaultModel
       );
+      const rawDirectEngineModelPath =
+        typeof parsed.directEngineModelPath === 'string' ? parsed.directEngineModelPath : DEFAULT_SETTINGS.directEngineModelPath;
+      const resolvedDirectEngineModelPath = isRetiredModelReference(rawDirectEngineModelPath)
+        ? DEFAULT_SETTINGS.directEngineModelPath
+        : rawDirectEngineModelPath;
       const voiceDefaults = getDefaultVoicePaths(resolvedMemoryPath, resolvedVoicePreset);
+
+      const normalizationWrites = [];
+      if (!hasStoredDefaultModel || rawDefaultModel !== resolvedDefaultModel) {
+        normalizationWrites.push(settingsApi.set('defaultModel', JSON.stringify(resolvedDefaultModel)));
+      }
+      if (rawDirectEngineModelPath !== resolvedDirectEngineModelPath) {
+        normalizationWrites.push(
+          settingsApi.set('directEngineModelPath', JSON.stringify(resolvedDirectEngineModelPath))
+        );
+      }
+      if (normalizationWrites.length > 0) {
+        await Promise.allSettled(normalizationWrites);
+      }
 
       set({
         settings: {
           ...DEFAULT_SETTINGS,
           ...parsed,
           defaultModel: resolvedDefaultModel,
+          directEngineModelPath: resolvedDirectEngineModelPath,
           memoryPath: resolvedMemoryPath,
           piperVoicePreset: resolvedVoicePreset,
           piperExecutablePath:
