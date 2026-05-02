@@ -1,342 +1,238 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ModernClaw | Local AI You Can Actually Understand</title>
+    <title>ModernClaw | Easy Local Private AI</title>
     <meta
       name="description"
-      content="ModernClaw is a free open-source local-first desktop workspace for private AI chat, editable memory, guided setup, and grounded offline-capable local context."
+      content="ModernClaw makes local AI simple: one-time purchase, no subscriptions, no API costs, and private AI that runs on your own machine."
     />
-    <meta
-      name="keywords"
-      content="ModernClaw, local-first AI, desktop AI, Ollama, Markdown memory, local AI workspace, open source AI, offline AI"
-    />
-    <meta name="author" content="ModernClaw" />
-    <meta property="og:title" content="ModernClaw | Local AI You Can Actually Understand" />
+    <meta property="og:title" content="ModernClaw | Easy Local Private AI" />
     <meta
       property="og:description"
-      content="A free open-source private local AI workspace with visible memory files, guided setup, no API metering, and offline-capable local workflows."
+      content="Buy it once. Run it locally. No subscriptions. No API costs. ModernClaw makes private AI feel normal."
     />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="./assets/modernclaw-logo.png" />
-    <meta property="og:site_name" content="ModernClaw" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700&display=swap"
-      rel="stylesheet"
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="ModernClaw | Easy Local Private AI" />
+    <meta
+      name="twitter:description"
+      content="Easy local AI for people who do not want a science project."
     />
+    <meta name="twitter:image" content="./assets/modernclaw-logo.png" />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <div class="page-shell">
-      <header class="site-header">
-        <a class="wordmark" href="#top" aria-label="ModernClaw home">ModernClaw</a>
-        <nav class="site-nav" aria-label="Primary">
-          <a href="#platform">Platform</a>
-          <a href="#offline">Offline AI</a>
-          <a href="#screenshots">Product Screens</a>
-          <a href="#contact">Contact</a>
-        </nav>
-      </header>
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="ModernClaw home">
+        <img src="./assets/modernclaw-logo.png" alt="ModernClaw" />
+      </a>
 
-      <main id="top">
-        <section class="hero">
-          <div class="hero-copy">
-            <div class="hero-brand">
-              <img src="./assets/modernclaw-logo.png" alt="ModernClaw AI logo" />
-            </div>
-            <p class="eyebrow">Free open-source local desktop AI</p>
-            <h1>Local AI you can actually understand.</h1>
-            <p class="hero-text">
-              ModernClaw is a free, open-source local AI brain creator for people who value
-              privacy in their AI chat, persistent memory, guided setup, and durable context on
-              their own machines.
-            </p>
-            <div class="hero-actions">
-              <a class="button button-primary" href="mailto:shawn@modernclaw.ai?subject=ModernClaw%20Support">Contact Support</a>
-              <a class="button button-secondary" href="https://github.com/projectpollify/ModernClaw">View on GitHub</a>
-              <a class="button button-secondary" href="#includes">See what it includes</a>
-            </div>
-            <div class="hero-meta">
-              <span>Desktop product first</span>
-              <span>Visible Markdown memory</span>
-              <span>No API costs for local use</span>
-              <span>Offline-capable after setup</span>
-            </div>
+      <nav class="site-nav" aria-label="Primary">
+        <a href="#why">Why</a>
+        <a href="#preview">Preview</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="hero">
+        <div class="hero-inner">
+          <p class="eyebrow">Easy local private AI</p>
+          <h1>ModernClaw</h1>
+          <p class="hero-text">
+            Private AI for people who want help, not homework. It runs on your
+            own machine, keeps your data local, and gives you a clear workspace
+            that feels approachable from the first launch.
+          </p>
+
+          <div class="hero-actions">
+            <a class="button button-primary" href="mailto:shawn@modernclaw.ai?subject=ModernClaw%20Support">
+              Contact Support
+            </a>
+            <a class="button button-secondary" href="https://github.com/projectpollify/ModernClaw" target="_blank" rel="noreferrer">
+              View GitHub
+            </a>
           </div>
 
-          <div class="hero-panel">
-            <div class="hero-card">
-              <p class="card-label">Stay in the Loop</p>
-              <h2 class="card-title">Join the ModernClaw interest list.</h2>
-              <p class="card-text">
-                Want updates, release news, and early project notes? Drop your email here and we
-                will open a message to the contact address at the bottom of the page.
-              </p>
-              <form class="signup-form" onsubmit="event.preventDefault(); var email=this.elements['email'].value.trim(); var subject='ModernClaw newsletter signup'; var body='Please add me to the ModernClaw interest list.%0D%0A%0D%0AEmail: ' + encodeURIComponent(email); window.location.href='mailto:shawn@modernclaw.ai?subject=' + encodeURIComponent(subject) + '&body=' + body;">
-                <label class="sr-only" for="signup-email">Email address</label>
-                <input id="signup-email" name="email" type="email" placeholder="you@example.com" required />
-                <button type="submit" class="button button-primary signup-button">Join by Email</button>
-              </form>
-              <p class="card-note">This opens your email app and sends your request to <a href="mailto:shawn@modernclaw.ai">shawn@modernclaw.ai</a>.</p>
-            </div>
+          <div class="value-row" aria-label="ModernClaw value points">
+            <span>$25 once</span>
+            <span>No subscriptions</span>
+            <span>No API costs</span>
+            <span>Private by default</span>
           </div>
-        </section>
+        </div>
+      </section>
 
-        <section class="proof-strip" aria-label="Key product traits">
-          <article>
-            <strong>Local-First</strong>
-            <span>Your data is your data. Local, private, and secure on your own machine.</span>
+      <section class="section-band proof-band" id="why">
+        <div class="section-heading">
+          <p class="eyebrow">Why it clicks</p>
+          <h2>Local AI should not feel like a science project.</h2>
+          <p>
+            The pitch is simple: buy it once, run it locally, and use AI without
+            feeling like you need to manage a stack of accounts, bills, and
+            technical chores.
+          </p>
+        </div>
+
+        <div class="proof-grid">
+          <article class="proof-card">
+            <h3>Easy</h3>
+            <p>Guided setup keeps the first experience calm and readable.</p>
           </article>
-          <article>
-            <strong>Free + Open Source</strong>
-            <span>Use, inspect, and build on ModernClaw under the Apache License 2.0.</span>
+          <article class="proof-card">
+            <h3>Local</h3>
+            <p>Your chats, memory, and workspace stay on your own machine.</p>
           </article>
-          <article>
-            <strong>No API Costs</strong>
-            <span>Run local models without ongoing per-token API billing for everyday use.</span>
+          <article class="proof-card">
+            <h3>Clear</h3>
+            <p>One visible workspace with less clutter and confusion.</p>
           </article>
-          <article>
-            <strong>No Internet Required</strong>
-            <span>Once ModernClaw is installed, it keeps working. Internet or not.</span>
+          <article class="proof-card">
+            <h3>Owned</h3>
+            <p>One-time purchase, no subscriptions, and no per-message API bill.</p>
           </article>
-        </section>
+        </div>
+      </section>
 
-        <section class="content-section" id="platform">
-          <div class="section-heading">
-            <p class="eyebrow">What ModernClaw Offers</p>
-            <h2>The desktop home for private AI.</h2>
-            <p>
-              ModernClaw is for people who want local AI to feel understandable. Instead of
-              spreading your setup across gateways, nodes, and automation infrastructure, it
-              keeps the core experience in one desktop workspace with visible memory, guided
-              setup, and durable local context.
-            </p>
+      <section class="section-band preview-band" id="preview">
+        <div class="preview-copy">
+          <p class="eyebrow">Product feel</p>
+          <h2>A calmer desktop workspace for private AI.</h2>
+          <p>
+            ModernClaw is built around a visible local workspace, editable
+            memory you can expand at your own pace, and setup checks that tell
+            you what is ready before you start.
+          </p>
+        </div>
+
+        <div class="workspace-preview" aria-label="ModernClaw product preview">
+          <div class="preview-sidebar">
+            <span class="dot"></span>
+            <strong>ModernClaw</strong>
+            <small>Private desktop workspace</small>
+            <ul>
+              <li class="active">Chat</li>
+              <li>Memory</li>
+              <li>Brain</li>
+              <li>Setup</li>
+            </ul>
           </div>
 
-          <div class="feature-grid">
-            <article class="feature-card">
-              <h3>One visible workspace</h3>
-              <p>
-                ModernClaw is centered on one clear local workspace so your chat, files,
-                attachments, and durable context stay in one place you can understand.
-              </p>
-            </article>
-            <article class="feature-card">
-              <h3>Editable memory you control</h3>
-              <p>
-                Shape behavior with visible files like <code>SOUL.md</code>, <code>USER.md</code>,
-                and <code>MEMORY.md</code> instead of leaving long-term context trapped in a black box.
-              </p>
-            </article>
-            <article class="feature-card">
-              <h3>Private local setup</h3>
-              <p>
-                Run local AI without needing a gateway, remote node fleet, heavy orchestration
-                layer, or ongoing API metering just to get useful day-to-day value.
-              </p>
-            </article>
-            <article class="feature-card">
-              <h3>Product-like experience</h3>
-              <p>
-                Use onboarding, readiness checks, setup actions, and built-in support that make
-                local AI feel calmer and easier to adopt.
-              </p>
-            </article>
-          </div>
-        </section>
-
-        <section class="content-section" id="screenshots">
-          <div class="section-heading">
-            <p class="eyebrow">Product Screens</p>
-            <h2>See the product, not just the pitch.</h2>
-            <p>
-              ModernClaw is built to feel like a clear local desktop product. These screens show
-              the guided setup flow and the everyday chat workspace that make the experience easier
-              to trust and easier to use.
-            </p>
-          </div>
-
-          <div class="screenshot-grid">
-            <figure class="screenshot-card">
-              <img src="./assets/Screenshot%202026-04-12%20193234.png" alt="ModernClaw setup status screen" />
-              <figcaption>
-                <strong>Guided setup</strong>
-                <span>Readiness checks, next actions, and a calmer install story for local AI.</span>
-              </figcaption>
-            </figure>
-            <figure class="screenshot-card">
-              <img src="./assets/Screenshot%202026-04-12%20193444.png" alt="ModernClaw local chat screen" />
-              <figcaption>
-                <strong>Local chat workspace</strong>
-                <span>A desktop-first chat surface with conversation history, local context, and built-in tools.</span>
-              </figcaption>
-            </figure>
-          </div>
-        </section>
-
-        <section class="content-section" id="offline">
-          <div class="section-heading">
-            <p class="eyebrow">Why Offline Matters</p>
-            <h2>AI that stays useful when the internet does not.</h2>
-            <p>
-              ModernClaw points toward a practical version of offline AI: a local desktop assistant
-              that can stay useful even when connectivity is weak, unavailable, expensive, or unsafe
-              to rely on. That matters for remote work, field work, travel, emergency response, and
-              real-world environments far away from a stable cloud connection.
-            </p>
-          </div>
-
-          <div class="feature-grid">
-            <article class="feature-card">
-              <h3>Emergency-ready local workflows</h3>
-              <p>
-                Local AI can matter most when you cannot depend on cloud services, from outages to
-                disaster response to working in the bush or the wild.
-              </p>
-            </article>
-            <article class="feature-card">
-              <h3>Built for harsh connectivity realities</h3>
-              <p>
-                Not every useful AI workflow belongs behind a constant internet connection. ModernClaw
-                keeps pointing toward AI that can travel with you and keep working where networks fail.
-              </p>
-            </article>
-          </div>
-        </section>
-
-        <section class="content-section" id="includes">
-          <div class="section-heading">
-            <p class="eyebrow">What You Get Today</p>
-            <h2>Durable local AI without the platform sprawl.</h2>
-            <p>
-              ModernClaw already gives you a practical local AI workspace with the core pieces in
-              place: chat, memory, setup guidance, multimodal input, and local context that stays
-              inspectable over time.
-            </p>
-          </div>
-
-          <div class="includes-grid">
-            <article class="include-item">
-              <h3>Local chat with Ollama</h3>
-              <p>Run the core assistant locally with a clear supported model lane.</p>
-            </article>
-            <article class="include-item">
-              <h3>Conversation history</h3>
-              <p>Keep a durable running record instead of treating every chat as disposable.</p>
-            </article>
-            <article class="include-item">
-              <h3>Editable memory files</h3>
-              <p>Work directly with <code>SOUL.md</code>, <code>USER.md</code>, and <code>MEMORY.md</code>.</p>
-            </article>
-            <article class="include-item">
-              <h3>Image understanding</h3>
-              <p>Add images to chat through the desktop app and keep them in the local workspace.</p>
-            </article>
-            <article class="include-item">
-              <h3>Audio notes with Whisper</h3>
-              <p>Record audio notes, transcribe them locally, and keep the attachment grounded in context.</p>
-            </article>
-            <article class="include-item">
-              <h3>Guided setup and support</h3>
-              <p>Use onboarding, readiness checks, and built-in help to get from install to useful faster.</p>
-            </article>
-            <article class="include-item">
-              <h3>Free and open-source base</h3>
-              <p>Start with a public codebase you can inspect, modify, and run on your own machine.</p>
-            </article>
-            <article class="include-item">
-              <h3>Offline-capable direction</h3>
-              <p>Use a product shaped around local control and offline resilience, not permanent cloud dependence.</p>
-            </article>
-          </div>
-        </section>
-
-        <section class="content-section workflow-section" id="workflow">
-          <div class="section-heading">
-            <p class="eyebrow">Workflow</p>
-            <h2>Start local. Stay grounded. Refine over time.</h2>
-            <p>
-              The product flow stays simple on purpose: get the machine ready, work inside a
-              visible workspace, and improve durable context over time.
-            </p>
-          </div>
-
-          <div class="workflow-rail">
-            <article class="workflow-step">
-              <span class="step-number">01</span>
-              <h3>Get the local stack ready</h3>
-              <p>
-                Use setup guidance to get Ollama running, install the recommended model, and
-                initialize the workspace files that shape long-term behavior.
-              </p>
-            </article>
-            <article class="workflow-step">
-              <span class="step-number">02</span>
-              <h3>Work inside visible context</h3>
-              <p>
-                Chat locally, inspect memory files, attach images, record audio notes, and keep
-                everything grounded in one workspace path you control.
-              </p>
-            </article>
-            <article class="workflow-step">
-              <span class="step-number">03</span>
-              <h3>Improve the workspace over time</h3>
-              <p>
-                Add durable notes, review staged knowledge, and refine the assistant without losing
-                sight of where your context lives or how it is being shaped.
-              </p>
-            </article>
-          </div>
-        </section>
-
-        <section class="content-section callout-section">
-          <div class="callout-card">
-            <div>
-              <p class="eyebrow">Why it matters</p>
-              <h2>Your AI. Your files. Your machine.</h2>
+          <div class="preview-main">
+            <div class="preview-toolbar">
+              <span>Local chat</span>
+              <strong>gemma4:e4b</strong>
             </div>
-            <p>
-              That means clearer storage, visible memory, calmer setup, no API metering for local
-              use, and a stronger path toward practical offline AI.
-            </p>
-          </div>
-        </section>
 
-        <section class="content-section contact-section" id="contact">
-          <div class="section-heading">
-            <p class="eyebrow">Contact</p>
-            <h2>Interested in ModernClaw?</h2>
-            <p>
-              Reach out if you want to talk about the open-source project, early access, product
-              direction, or where ModernClaw could go next as a clearer local alternative to
-              heavier agent stacks.
-            </p>
-          </div>
+            <div class="message message-user">Can you help me plan my day?</div>
+            <div class="message message-ai">
+              Yes. I can help you organize it locally, keep the context in your
+              workspace, and remember what matters next time.
+            </div>
 
-          <div class="contact-card">
-            <div>
-              <p class="contact-label">GitHub</p>
-              <a href="https://github.com/projectpollify/ModernClaw">github.com/projectpollify/ModernClaw</a>
-            </div>
-            <div>
-              <p class="contact-label">Email</p>
-              <a href="mailto:shawn@modernclaw.ai">shawn@modernclaw.ai</a>
-            </div>
-            <div>
-              <p class="contact-label">Location</p>
-              <p>Vancouver, Canada</p>
+            <div class="memory-strip">
+              <span>SOUL.md</span>
+              <span>USER.md</span>
+              <span>MEMORY.md</span>
             </div>
           </div>
-        </section>
-      </main>
+        </div>
+      </section>
 
-      <footer class="site-footer">
-        <p>ModernClaw</p>
-        <p>Private AI, clear memory, calmer setup.</p>
-      </footer>
-    </div>
+      <section class="section-band pricing-band" id="pricing">
+        <div class="section-heading">
+          <p class="eyebrow">Simple pricing</p>
+          <h2>$25 once. No subscription trap.</h2>
+          <p>
+            ModernClaw is for people who want private local AI without another
+            monthly bill waiting in the background.
+          </p>
+        </div>
+
+        <div class="price-grid">
+          <div class="price-box">
+            <span class="price">$25</span>
+            <span class="price-label">one-time purchase</span>
+          </div>
+          <ul class="pricing-list">
+            <li>No monthly subscription</li>
+            <li>No per-message API cost</li>
+            <li>No cloud account required for the core experience</li>
+            <li>Private local workspace on your own machine</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="section-band detail-band">
+        <article>
+          <p class="eyebrow">Offline direction</p>
+          <h2>Useful even when the internet is not.</h2>
+          <p>
+            Once ModernClaw is installed, it keeps working. That matters for
+            privacy, travel, remote work, unstable connections, and the comfort
+            of knowing your tool still belongs to you.
+          </p>
+        </article>
+
+        <article>
+          <p class="eyebrow">Open source</p>
+          <h2>Visible product. Visible code.</h2>
+          <p>
+            ModernClaw is public on GitHub so people can inspect the project,
+            understand what it is doing, and follow how it evolves.
+          </p>
+          <a class="text-link" href="https://github.com/projectpollify/ModernClaw" target="_blank" rel="noreferrer">
+            Explore the repository
+          </a>
+        </article>
+      </section>
+
+      <section class="section-band faq-band" id="faq">
+        <div class="section-heading">
+          <p class="eyebrow">FAQ</p>
+          <h2>Simple answers for first-time users.</h2>
+        </div>
+
+        <div class="faq-grid">
+          <article class="faq-card">
+            <h3>Do I need to be technical?</h3>
+            <p>No. ModernClaw is being shaped to feel approachable from the start.</p>
+          </article>
+          <article class="faq-card">
+            <h3>Do I need API credits?</h3>
+            <p>No. The core promise is local AI without a meter running.</p>
+          </article>
+          <article class="faq-card">
+            <h3>Is there a subscription?</h3>
+            <p>No. The current offer is built around a one-time purchase.</p>
+          </article>
+          <article class="faq-card">
+            <h3>Why local?</h3>
+            <p>Local gives people more privacy, ownership, and trust.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="closing-band">
+        <p class="eyebrow">ModernClaw</p>
+        <h2>Private AI without the setup anxiety.</h2>
+        <p>
+          Local AI for people who want something simple enough to use and clear
+          enough to trust.
+        </p>
+        <a class="button button-primary" href="mailto:shawn@modernclaw.ai?subject=ModernClaw%20Interest">
+          Join by Email
+        </a>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <span>ModernClaw</span>
+      <a href="mailto:shawn@modernclaw.ai">shawn@modernclaw.ai</a>
+    </footer>
   </body>
 </html>
