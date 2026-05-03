@@ -10,6 +10,14 @@ Use this page for setup help and common next steps before opening an issue.
 
 ## Common Setup Questions
 
+### What does early access include?
+
+The public offer is currently framed as $10 early access for the packaged core local app, with a planned $25 regular one-time price later.
+
+The core local app does not require a subscription or per-message API costs for local use. Optional premium brains and enterprise editions may come later, but they are not required for the base local workspace.
+
+For purchase, support, or early access questions, contact `shawn@modernclaw.ai`.
+
 ### The app installs, but I cannot chat
 
 Make sure:

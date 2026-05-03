@@ -1,6 +1,6 @@
 # ModernClaw Overview
 
-ModernClaw is a local-first AI assistant app designed to feel more like a private personal workspace than a generic chatbot.
+ModernClaw is an easy local private AI assistant app designed to feel more like a private personal workspace than a generic chatbot.
 
 It is built for people who want:
 
@@ -80,6 +80,7 @@ ModernClaw is a strong fit for people who want:
 - a local AI companion for daily life or creative work
 - direct control over memory and behavior
 - a more guided experience than building everything manually
+- a core local app that does not require a subscription or per-message API costs
 
 It is especially useful for users who like the idea of local AI, but do not want to live inside terminal-first tooling all day.
 
@@ -93,6 +94,18 @@ The near-term direction is:
 - improve multimodal support like image understanding and audio-note workflows
 - keep Joe Support useful without exposing full multi-brain management
 - keep the product local, legible, and trustworthy
+
+## Public Offer
+
+The public landing page currently positions ModernClaw as:
+
+- $10 early access for the packaged core local app
+- $25 planned regular one-time price later
+- no subscription required for the core local app
+- no per-message API costs required for local use
+- optional premium brains and enterprise editions may come later
+
+The GitHub source remains public under the Apache License 2.0. The core product story should stay simple, local, private, and approachable.
 
 ## Short Version
 

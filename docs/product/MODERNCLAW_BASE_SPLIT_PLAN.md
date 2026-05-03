@@ -18,7 +18,9 @@ The current shipped app may still contain features that belong to the fuller mul
 ## Product Definition
 
 ModernClawBase is:
-- free and open-source
+- open-source under the Apache License 2.0
+- planned as a simple packaged core app with $10 early access and a $25 regular one-time price later
+- subscription-free for the core local workspace
 - local-first
 - single-workspace
 - one user workspace plus built-in Joe Support
@@ -93,6 +95,8 @@ These should stay out of the base product unless they become essential:
 - premium expert packs
 - enterprise or team layers
 - convenience features that add complexity before the core product is polished
+
+Premium expert packs, multiple-brain workflows, and enterprise/team layers may become optional future editions, but they should not be required for the core local app.
 
 ## Product Standards
 

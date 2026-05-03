@@ -1,8 +1,10 @@
 # ModernClaw
 
-ModernClaw is a free, open-source, local-first desktop workspace for building and using durable AI context on your own machine.
+ModernClaw is easy local private AI: a desktop workspace for people who want help, not homework.
 
-The product is intentionally focused:
+It runs on your own machine, keeps your data local, and gives you a clear workspace that feels approachable from the first launch. The source code is public under the Apache License 2.0, and the packaged core local app is being positioned as a simple one-time purchase: $10 early access, with a planned $25 regular price later.
+
+The core local app is intentionally focused:
 
 - one local workspace
 - one chat surface
@@ -10,6 +12,10 @@ The product is intentionally focused:
 - one Brain-guided refinement flow
 - one clear model lane centered on `gemma4:e4b`
 - one practical local voice pipeline
+
+The core local experience does not require a subscription or per-message API costs. Optional premium brains and enterprise editions may come later, but they are not required for the base local workspace.
+
+Website: [modernclaw.ai](https://modernclaw.ai)
 
 ## What It Includes
 
@@ -34,12 +40,25 @@ ModernClaw is meant to be useful on its own.
 
 It keeps the core ModernClaw identity:
 
+- easy local private AI
 - local-first
 - durable Markdown context files
 - grounded knowledge files
 - one clear setup story
 - practical chat plus memory workflows
 - approachable setup and settings
+
+## Pricing And Editions
+
+The public landing page currently positions ModernClaw this way:
+
+- early access core app: $10 once
+- planned regular core app price later: $25 once
+- no subscription required for the core local app
+- no per-message API costs required for local use
+- optional premium brains and enterprise editions may come later
+
+The GitHub source remains open under the Apache License 2.0. The paid offer is about packaged access, convenience, support, and continued development of the core desktop product.
 
 ## Repository Layout
 

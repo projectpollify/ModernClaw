@@ -2,7 +2,7 @@
 
 This is the current ModernClaw desktop application surface.
 
-It is a local-first single-workspace app built around durable Markdown memory files, grounded knowledge files, local model-backed chat, and practical voice support.
+It is an easy local private AI workspace built around durable Markdown memory files, grounded knowledge files, local model-backed chat, and practical voice support.
 
 ## What The App Does
 
@@ -23,6 +23,14 @@ It is a local-first single-workspace app built around durable Markdown memory fi
 - single local workspace
 - primary model lane: `gemma4:e4b`
 - curated Piper voices: `Amy (Female)`, `Joe (Male)`
+- no subscription required for the core local app
+- no per-message API costs required for local use
+
+## Public Offer
+
+The public landing page currently frames ModernClaw as $10 early access for the packaged core local app, with a planned $25 regular one-time price later.
+
+The source code remains public under the Apache License 2.0. Optional premium brains and enterprise editions may come later, but the base local workspace is intended to stay simple and usable without a required subscription.
 
 ## Development
 
