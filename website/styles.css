@@ -179,6 +179,13 @@ li {
   margin-bottom: 34px;
 }
 
+.bottom-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+}
+
 .button {
   display: inline-flex;
   align-items: center;
@@ -614,6 +621,7 @@ li {
   }
 
   .hero-actions,
+  .bottom-actions,
   .value-row,
   .site-footer {
     flex-direction: column;
