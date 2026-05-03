@@ -293,13 +293,17 @@ li {
   background: #eff7f3;
 }
 
-.preview-sidebar .dot {
+.preview-sidebar .preview-logo {
   display: block;
-  width: 34px;
-  height: 34px;
+  width: 42px;
+  height: 42px;
   margin-bottom: 12px;
   border-radius: 50%;
-  background: var(--blue);
+  background-image: url("./assets/modernclaw-logo.png");
+  background-repeat: no-repeat;
+  background-position: left center;
+  background-size: auto 100%;
+  box-shadow: 0 8px 18px rgba(32, 117, 255, 0.16);
 }
 
 .preview-sidebar strong,
